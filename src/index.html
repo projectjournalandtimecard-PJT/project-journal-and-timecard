@@ -1,0 +1,1617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Project Journal &amp; Timecard</title>
+<style>
+:root{
+  --bg:#f4f6fb; --panel:#ffffff; --text:#1f2937; --muted:#6b7280;
+  --border:#dbe2ea; --accent:#2563eb; --accent2:#1d4ed8;
+  --success:#16a34a; --warn:#d97706; --danger:#dc2626;
+  --bill:#16a34a; --nonbill:#d97706; --unpaid:#6b7280;
+  --group:#eef2f9;
+}
+body.dark{
+  --bg:#0f172a; --panel:#111827; --text:#f3f4f6; --muted:#94a3b8;
+  --border:#253046; --accent:#3b82f6; --accent2:#2563eb; --group:#0b1220;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Segoe UI,Arial,sans-serif;}
+button,.btn{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:9px 14px;cursor:pointer;font-size:14px;}
+button:hover{background:var(--accent2)}
+button.ghost{background:transparent;color:var(--text);border:1px solid var(--border);}
+button.ghost:hover{background:rgba(37,99,235,.08)}
+button.danger{background:var(--danger)} button.danger:hover{filter:brightness(.92)}
+button.small{padding:5px 10px;font-size:12px;}
+select,input,textarea{border:1px solid var(--border);background:var(--panel);color:var(--text);
+  border-radius:9px;padding:8px;font-family:inherit;font-size:14px;width:100%;}
+.muted{color:var(--muted);font-size:12px;}
+
+/* App chrome */
+.appbar{display:flex;align-items:center;gap:18px;padding:12px 22px;border-bottom:1px solid var(--border);
+  background:var(--panel);position:sticky;top:0;z-index:30;flex-wrap:wrap;}
+.brand{display:flex;align-items:center;gap:11px;font-size:18px;font-weight:800;}
+.brand-icon{width:34px;height:34px;border-radius:9px;display:block;flex:none;}
+.brand small{display:block;font-size:11px;color:var(--muted);font-weight:500;}
+.maintabs{display:flex;gap:8px;}
+.maintab{padding:8px 16px;border-radius:10px;cursor:pointer;border:1px solid var(--border);
+  background:transparent;font-weight:700;font-size:14px;}
+.maintab.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.spacer{flex:1}
+.save-pill{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--muted);}
+.save-dot{width:8px;height:8px;border-radius:50%;background:var(--success);}
+.save-dot.saving{background:var(--warn);}
+.sync-pill{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--muted);cursor:pointer;
+  border:1px solid var(--border);border-radius:999px;padding:4px 11px;}
+.sync-pill:hover{background:rgba(37,99,235,.06);}
+.gear-wrap{position:relative;}
+.gear-btn{font-size:16px;line-height:1;padding:7px 10px;}
+.gear-menu{position:absolute;right:0;top:calc(100% + 6px);background:var(--panel);border:1px solid var(--border);
+  border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.18);padding:6px;min-width:220px;z-index:40;display:none;}
+.gear-menu.open{display:block;}
+.gear-menu button{display:block;width:100%;text-align:left;background:transparent;color:var(--text);border:none;
+  border-radius:8px;padding:9px 12px;font-size:14px;cursor:pointer;}
+.gear-menu button:hover{background:rgba(37,99,235,.08);}
+.gear-menu .menu-label{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding:8px 12px 4px;}
+.gear-menu .divider{height:1px;background:var(--border);margin:6px 4px;}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--unpaid);}
+.sync-dot.on{background:var(--success);} .sync-dot.busy{background:var(--warn);} .sync-dot.err{background:var(--danger);}
+.sync-row{border:1px solid var(--border);border-radius:12px;padding:13px;margin-bottom:12px;background:var(--bg);}
+.sync-row h3{margin:0 0 6px;font-size:14px;}
+.keybox{display:flex;gap:8px;align-items:center;margin-top:8px;}
+.keybox code{flex:1;font-family:Consolas,monospace;font-size:12px;background:var(--panel);border:1px solid var(--border);
+  border-radius:8px;padding:8px 10px;overflow:auto;white-space:nowrap;}
+.sync-note{font-size:12px;color:var(--muted);line-height:1.5;margin:6px 0 0;}
+.main-pane{display:none}.main-pane.active{display:block}
+
+/* ---------- Journal ---------- */
+.app{display:flex;min-height:calc(100vh - 58px);}
+.sidebar{width:280px;background:var(--panel);border-right:1px solid var(--border);
+  padding:18px;position:sticky;top:58px;height:calc(100vh - 58px);overflow:auto;}
+.card{background:var(--bg);border:1px solid var(--border);border-radius:16px;padding:14px;margin-bottom:16px;}
+.card-header{display:flex;justify-content:space-between;align-items:center;cursor:pointer;
+  font-weight:700;font-size:13px;user-select:none;}
+.card-header .chev{transition:transform .15s ease;}
+.card.collapsed .card-body{display:none;}
+.card.collapsed .chev{transform:rotate(-90deg);}
+.card-body{margin-top:12px;}
+.sidebar .card-body button{width:100%;margin-bottom:10px;}
+.jmain{flex:1;padding:24px;min-width:0;}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;color:var(--muted);font-size:13px;gap:12px;flex-wrap:wrap;}
+.title-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:8px 0 8px;}
+.project-title{font-size:38px;font-weight:800;margin:0;}
+.health{padding:6px 12px;border-radius:999px;font-size:13px;font-weight:700;}
+.health.under{background:#dcfce7;color:#166534} .health.near{background:#fef3c7;color:#92400e}
+.health.over{background:#fee2e2;color:#991b1b} .health.none{background:var(--group);color:var(--muted)}
+.clientcode-row{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+.clientcode-row input{width:140px;}
+.toolbar{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;align-items:center;}
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:18px;}
+.stat{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px;}
+.stat-label{font-size:12px;color:var(--muted)} .stat-value{font-size:30px;font-weight:800}
+.search{margin-bottom:14px;}
+.table-wrap{background:var(--panel);border:1px solid var(--border);border-radius:18px;overflow:auto;}
+table{width:100%;border-collapse:collapse;}
+th,td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:top;text-align:left;font-size:13px;}
+th{position:sticky;top:0;background:var(--panel);z-index:2;color:var(--muted);}
+.section-col{width:190px;font-weight:700}
+.col-num{width:96px}
+#reportBody tr.clickrow{cursor:pointer}
+#reportBody tr.clickrow:hover td{background:rgba(127,127,127,.10)}
+table.role-preparer .col-rev{display:none}
+table.role-reviewer .col-prep{display:none}
+.group-row td{background:var(--group);cursor:pointer;font-weight:700;user-select:none;}
+.group-row .chev{display:inline-block;width:14px;transition:transform .15s ease;}
+.group-row.collapsed .chev{transform:rotate(-90deg);}
+.group-count{color:var(--muted);font-weight:500;margin-left:8px;}
+.note-box{min-height:64px;resize:vertical;font-size:13px;}
+.cell-actions{display:flex;gap:6px;margin-top:6px;}
+.var-pos{color:var(--success);font-weight:600} .var-neg{color:var(--danger);font-weight:600}
+.synced-note{font-size:11px;color:var(--accent);margin-top:4px;font-weight:600;}
+.recent-project{padding:9px;border:1px solid var(--border);border-radius:12px;margin-bottom:8px;cursor:pointer;font-size:13px;}
+.recent-project:hover{background:rgba(37,99,235,.08);} .recent-project.active{border-color:var(--accent);}
+
+/* ---------- Time Card ---------- */
+.wrap{max-width:1180px;margin:0 auto;padding:22px;}
+.tabs{display:flex;gap:8px;margin:6px 0 16px;}
+.tab{padding:8px 16px;border-radius:10px;cursor:pointer;border:1px solid var(--border);background:var(--panel);font-weight:600;font-size:14px;}
+.tab.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.datectrl{display:flex;gap:6px;align-items:center;} .datectrl input{width:auto;}
+.dow{font-size:15px;font-weight:700;margin-left:6px;}
+.tcards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px;}
+.tcard{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px;}
+.tcard .lbl{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;}
+.tcard .val{font-size:28px;font-weight:800;margin-top:4px;}
+.tcard.bill .val{color:var(--bill)} .tcard.nonbill .val{color:var(--nonbill)}
+.tcard.unpaid .val{color:var(--unpaid)} .tcard.total .val{color:var(--accent)}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:18px;}
+.panel h3{margin:0;padding:13px 16px;border-bottom:1px solid var(--border);font-size:15px;display:flex;justify-content:space-between;align-items:center;}
+.panel .body{padding:6px 10px 12px;}
+.codecell{font-weight:800;width:34px;text-align:center;}
+.typedot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;}
+.t-billable{background:var(--bill)} .t-nonbillable{background:var(--nonbill)} .t-unpaid{background:var(--unpaid)}
+.num{text-align:right;font-variant-numeric:tabular-nums;}
+.dur-cell{font-variant-numeric:tabular-nums;font-weight:600;}
+.start-cell{color:var(--muted);font-variant-numeric:tabular-nums;}
+.addbar{display:flex;gap:8px;padding:10px;}
+.hint{font-size:12px;color:var(--muted);padding:0 16px 12px;line-height:1.5;}
+.linkcell{min-width:230px;}
+.linkcell select{margin-bottom:5px;}
+.pill{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;}
+.pill.none{background:var(--group);color:var(--muted)}
+.pill.warn{background:#fef3c7;color:#92400e}
+.pill.ok{background:#dcfce7;color:#166534}
+.daychip{font-size:12px;padding:4px 10px;border-radius:999px;border:1px solid var(--border);background:var(--panel);cursor:pointer;}
+.daychip:hover{background:rgba(37,99,235,.08);} .daychip.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.bar{height:10px;border-radius:6px;background:var(--group);overflow:hidden;display:flex;}
+.bar i{display:block;height:100%;} .bar .b{background:var(--bill)} .bar .nb{background:var(--nonbill)}
+.tab-pane{display:none}.tab-pane.active{display:block}
+
+/* ---------- Modals ---------- */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:99;padding:20px;overscroll-behavior:contain;}
+body.modal-open{overflow:hidden;}
+.modal-bg.open{display:flex}
+.modal{background:var(--panel);border-radius:18px;padding:22px;width:480px;max-width:100%;max-height:90vh;overflow-y:auto;overscroll-behavior:contain;}
+.modal.wide{width:760px;}
+.modal h2{margin-top:0}
+.modal-meta{font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.7;}
+.modal-actions{display:flex;gap:10px;margin-top:14px;justify-content:flex-end;}
+.editor-toolbar{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+#bigEditor{width:100%;height:48vh;font-size:15px;line-height:1.5;}
+.modal pre{background:var(--group);padding:14px;border-radius:10px;white-space:pre-wrap;font-size:13px;max-height:50vh;overflow:auto;}
+.modal.cch{width:88vw;max-width:88vw;height:85vh;display:flex;flex-direction:column;resize:both;overflow:hidden;min-width:380px;min-height:300px;}
+.modal.cch pre{flex:1;white-space:pre;max-height:none;font-size:14px;line-height:1.5;}
+.modal.cch pre b{font-weight:800;}
+.hidden{display:none}
+@media(max-width:880px){.stats,.tcards{grid-template-columns:repeat(2,1fr)}.app{flex-direction:column}.sidebar{width:100%;height:auto;position:static}}
+</style>
+</head>
+<body>
+
+<div class="appbar">
+  <div class="brand"><img class="brand-icon" alt="PJT" src="data:image/png;base64,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" /><span>Project Journal &amp; Timecard<small>Project journal + timecard, team-synced · v2.9</small></span></div>
+  <div class="maintabs">
+    <div class="maintab active" data-m="journal" onclick="switchMain('journal')">Project Journal</div>
+    <div class="maintab" data-m="timecard" onclick="switchMain('timecard')">Time Card</div>
+    <div class="maintab" data-m="win" onclick="switchMain('win')">Daily W.I.N.</div>
+  </div>
+  <div class="spacer"></div>
+  <div class="save-pill"><span class="save-dot" id="saveDot"></span><span id="saveStatus">Saved</span></div>
+  <div class="sync-pill" id="syncPill" onclick="openSettings()" title="Cloud sync settings"><span class="sync-dot" id="syncDot"></span><span id="syncStatus">Sync off</span></div>
+  <div class="gear-wrap">
+    <button class="ghost small gear-btn" onclick="toggleGearMenu(event)" title="Menu" aria-label="Menu">⚙</button>
+    <div class="gear-menu" id="gearMenu">
+      <button onclick="gearGo(openSettings)">☁&nbsp; Cloud Sync…</button>
+      <button onclick="gearGo(function(){openModal('guideModalBg')})">❔&nbsp; Guide</button>
+      <div class="divider"></div>
+      <div class="menu-label">Backup &amp; export</div>
+      <button onclick="gearGo(exportBackup)">💾&nbsp; Save Journal Backup</button>
+      <button onclick="gearGo(triggerImport)">📥&nbsp; Import Backup</button>
+      <button onclick="gearGo(exportJournalMarkdown)">📄&nbsp; Save Journal Markdown</button>
+      <div class="divider"></div>
+      <button onclick="gearGo(toggleDark)">🌓&nbsp; Dark / Light</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================= JOURNAL ============================= -->
+<div class="main-pane active" id="main-journal">
+<div class="app">
+  <div class="sidebar">
+    <div class="card">
+      <div style="font-size:12px;font-weight:700;margin-bottom:8px">CURRENT PROJECT</div>
+      <select id="projectPicker"></select>
+      <label class="muted" style="display:flex;align-items:center;gap:6px;margin-top:8px;font-size:12px">
+        <input type="checkbox" id="showArchivedChk" style="width:auto" onchange="toggleShowArchived(this.checked)"> Show archived projects
+      </label>
+    </div>
+    <div class="card">
+      <div style="font-size:12px;font-weight:700;margin-bottom:10px">RECENT PROJECTS</div>
+      <div id="recentProjects"></div>
+    </div>
+    <div class="card" data-acc="projects">
+      <div class="card-header"><span>PROJECTS</span><span class="chev">▾</span></div>
+      <div class="card-body">
+        <button onclick="openNewProjectModal()">New Project</button>
+        <button class="ghost" onclick="renameProject()">Rename Project</button>
+        <button class="ghost" onclick="duplicateProject()">Duplicate Project</button>
+        <button class="ghost" onclick="rollForwardProject()">Copy to New Year</button>
+        <button class="ghost" onclick="addCustomSection()">Add Custom Section</button>
+        <button class="danger" onclick="deleteProject()">Delete Project</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="jmain">
+    <div class="topbar">
+      <div>Created: <span id="createdDate">--</span> &nbsp;&nbsp; Modified: <span id="modifiedDate">--</span></div>
+    </div>
+    <div class="title-row">
+      <h1 class="project-title" id="projectTitle">New Project</h1>
+      <span class="health none" id="healthBadge">No Budget Set</span>
+    </div>
+    <div class="clientcode-row">
+      <label class="muted">Time-card client code
+        <input id="clientCodeInput" placeholder="e.g. ACME" onchange="updateClientCode(this.value)">
+      </label>
+      <label class="muted">My role
+        <select id="roleSelect" style="width:auto" onchange="updateRole(this.value)">
+          <option value="both">Both notes</option>
+          <option value="preparer">Preparer</option>
+          <option value="reviewer">Reviewer</option>
+        </select>
+      </label>
+      <label class="muted" style="display:inline-flex;align-items:center;gap:6px">
+        <input type="checkbox" id="archiveChk" style="width:auto" onchange="updateArchived(this.checked)"> Archived (done — hides from both pickers)
+      </label>
+      <span class="muted" id="clientCodeHint"></span>
+    </div>
+    <div style="margin-bottom:16px">
+      <button class="ghost small" id="notesToggle" onclick="toggleProjectNotes()">📝 Project Notes ▸</button>
+      <div id="projectNotesPanel" class="hidden" style="margin-top:10px">
+        <textarea id="projectNotes" class="note-box" style="min-height:96px;width:100%"
+          placeholder="Client contact info, phone numbers, general notes not tied to any section…"
+          onchange="updateProjectNotes(this.value)"></textarea>
+        <div class="cell-actions" style="margin-top:6px">
+          <button class="ghost small" onclick="openProjectNotesEditor()">Expand ↗</button>
+          <button class="ghost small" onclick="copyText(currentProject().notes||'')">Copy</button>
+        </div>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button onclick="expandAll()">Expand All</button>
+      <button class="ghost" onclick="collapseAll()">Collapse All</button>
+      <button class="ghost" onclick="exportProjectMarkdown()">Export Project Markdown</button>
+      <button class="ghost" onclick="copyOpenItems()">Copy Open Items</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-label">TOTAL BUDGET</div><div class="stat-value" id="totalBudget">0.0</div></div>
+      <div class="stat"><div class="stat-label">TOTAL ACTUAL</div><div class="stat-value" id="totalActual">0.0</div></div>
+      <div class="stat"><div class="stat-label">VARIANCE</div><div class="stat-value" id="varianceTotal">0.0</div></div>
+      <div class="stat"><div class="stat-label">COMPLETE</div><div class="stat-value" id="completeCount">0</div></div>
+      <div class="stat"><div class="stat-label">OPEN</div><div class="stat-value" id="openCount">0</div></div>
+    </div>
+    <input class="search" id="searchBox" placeholder="Search sections, notes..." oninput="renderSections()" />
+    <div class="table-wrap">
+      <table id="journalTable">
+        <thead><tr>
+          <th class="section-col">Section</th><th>Status</th>
+          <th class="col-num">Budget</th><th class="col-num">Actual</th><th class="col-num">Variance</th>
+          <th class="col-prep">Preparer Notes</th><th class="col-rev">Reviewer Notes</th><th>Open Items</th>
+        </tr></thead>
+        <tbody id="sectionsTable"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ============================= TIME CARD ============================= -->
+<div class="main-pane" id="main-timecard">
+<div class="wrap">
+  <div class="tabs">
+    <div class="tab active" data-tab="day" onclick="switchTcTab('day')">Day Entry</div>
+    <div class="tab" data-tab="report" onclick="switchTcTab('report')">Month Report</div>
+  </div>
+
+  <!-- DAY -->
+  <div class="tab-pane active" id="tc-day">
+    <div class="toolbar">
+      <div class="datectrl">
+        <button class="ghost small" onclick="shiftDay(-1)">◀</button>
+        <input type="date" id="datePicker" onchange="onDateChange()" />
+        <button class="ghost small" onclick="shiftDay(1)">▶</button>
+        <button class="ghost small" onclick="goToday()">Today</button>
+        <span class="dow" id="dowLabel"></span>
+      </div>
+      <span class="spacer"></span>
+      <button class="ghost small" onclick="carryForward()">Carry codes forward</button>
+      <button class="ghost small" id="autoSyncBtn" onclick="toggleAutoSync()">Auto-sync: Off</button>
+      <button class="small" onclick="syncDayToJournal()">↪ Sync to Journal</button>
+      <button class="ghost small" onclick="copySummary()">Copy / Read for CCH</button>
+    </div>
+    <div id="loggedDays" style="display:flex;gap:6px;flex-wrap:wrap;margin:-6px 0 14px;"></div>
+
+    <div class="tcards">
+      <div class="tcard bill"><div class="lbl">Billable</div><div class="val" id="cBill">0.00</div></div>
+      <div class="tcard nonbill"><div class="lbl">Non-billable</div><div class="val" id="cNon">0.00</div></div>
+      <div class="tcard unpaid"><div class="lbl">Unpaid (lunch)</div><div class="val" id="cUnpaid">0.00</div></div>
+      <div class="tcard total"><div class="lbl">Total Logged</div><div class="val" id="cTotal">0.00</div></div>
+    </div>
+
+    <div class="panel">
+      <h3><span>Time Log</span>
+        <span style="display:flex;align-items:center;gap:14px;font-weight:400">
+          <span class="muted">Day start
+            <input type="text" inputmode="numeric" id="dayStart" placeholder="0800" style="width:90px;display:inline-block;padding:4px 6px" onchange="updateDayStart(this.value)"></span>
+          <button class="small" onclick="addEntry()">+ Add time block</button>
+        </span>
+      </h3>
+      <div class="body">
+        <table>
+          <thead><tr><th>Code</th><th>Start</th><th>Stop</th><th class="num">Dur</th><th>Description</th><th></th></tr></thead>
+          <tbody id="logBody"></tbody>
+        </table>
+      </div>
+      <div class="hint">Set only the <b>code</b> and <b>stop</b> time — start auto-fills from the previous block.</div>
+    </div>
+
+    <div class="panel">
+      <h3><span>Daily Codes, Totals &amp; Journal Sync</span>
+        <button class="small" onclick="addCode()">+ Add code</button>
+      </h3>
+      <div class="body">
+        <table>
+          <thead><tr>
+            <th>Code</th><th>Client</th><th>Bill</th><th>Type</th>
+            <th class="linkcell">Sync to Journal (optional)</th><th class="num">Hrs</th><th></th>
+          </tr></thead>
+          <tbody id="codeBody"></tbody>
+        </table>
+      </div>
+      <div class="hint">Pick a journal project (only those with a client code appear) and a section to enable sync.
+        Leave it blank to just track the time without posting it anywhere.</div>
+    </div>
+
+    <div class="panel">
+      <h3><span>Today's W.I.N.</span><span class="muted" id="winMiniProgress"></span></h3>
+      <div class="body" id="winMiniRows"></div>
+    </div>
+  </div>
+
+  <!-- REPORT -->
+  <div class="tab-pane" id="tc-report">
+    <div class="toolbar">
+      <label class="muted">Month <input type="month" id="monthPicker" style="width:auto" onchange="renderReport()"></label>
+      <span class="spacer"></span>
+      <button class="ghost small" onclick="copyReport()">Copy Report</button>
+    </div>
+    <div class="tcards">
+      <div class="tcard bill"><div class="lbl">Billable</div><div class="val" id="rBill">0.00</div></div>
+      <div class="tcard nonbill"><div class="lbl">Non-billable</div><div class="val" id="rNon">0.00</div></div>
+      <div class="tcard unpaid"><div class="lbl">Unpaid</div><div class="val" id="rUnpaid">0.00</div></div>
+      <div class="tcard total"><div class="lbl">Total · Days</div><div class="val" id="rTotal">0.00</div></div>
+    </div>
+    <div class="panel">
+      <h3>By Client / Project <span class="muted" id="rRange"></span></h3>
+      <div class="hint" style="margin:0 0 6px">Click any row for the full note trail — every time-entry note for that code this month, plus the linked journal notes. Handy when someone asks where the hours went.</div>
+      <div class="body">
+        <table>
+          <thead><tr><th>Client / Project</th><th>Type</th><th class="num">Hours</th><th style="width:36%">Share</th></tr></thead>
+          <tbody id="reportBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ============================= DAILY W.I.N. ============================= -->
+<div class="main-pane" id="main-win">
+<div class="wrap">
+  <div class="toolbar">
+    <div class="datectrl">
+      <button class="ghost small" onclick="winShift(-1)">◀</button>
+      <input type="date" id="winDate" onchange="onWinDateChange()" />
+      <button class="ghost small" onclick="winShift(1)">▶</button>
+      <button class="ghost small" onclick="winToday()">Today</button>
+      <span class="dow" id="winDow"></span>
+    </div>
+    <span class="spacer"></span>
+    <button class="ghost small" onclick="copyWin()">Copy / Export W.I.N.</button>
+  </div>
+  <div class="panel">
+    <h3><span>Daily W.I.N. — What's Important Now</span><span class="muted" id="winProgress"></span></h3>
+    <div class="body" id="winRows"></div>
+    <div class="hint">Up to five things that matter most today. Check them off as you go — they show on the Time Card and in the CCH summary for the same date.</div>
+  </div>
+</div>
+</div>
+
+<!-- Shared modals -->
+<div class="modal-bg" id="projectModalBg"><div class="modal">
+  <h2>Create New Project</h2>
+  <input id="newProjectName" placeholder="Project Name" /><br><br>
+  <input id="newClientCode" placeholder="Time-card client code (optional, e.g. ACME)" /><br><br>
+  <select id="templateType"><option value="audit">Audit Template</option><option value="blank">Blank Project</option></select>
+  <select id="newRole" style="margin-top:10px"><option value="both">Both notes columns</option><option value="preparer">Preparer role</option><option value="reviewer">Reviewer role</option></select>
+  <div class="modal-actions">
+    <button class="ghost" onclick="closeModal('projectModalBg')">Cancel</button>
+    <button onclick="createProject()">Create</button>
+  </div>
+</div></div>
+
+<div class="modal-bg" id="editorModalBg"><div class="modal wide">
+  <h2 id="editorTitle">Notes</h2>
+  <div class="modal-meta" id="editorMeta"></div>
+  <div class="editor-toolbar">
+    <button class="ghost" onclick="mdWrap('**')"><b>B</b></button>
+    <button class="ghost" onclick="mdWrap('*')"><i>I</i></button>
+    <button class="ghost" onclick="mdBullets()">• List</button>
+    <button class="ghost" onclick="copyEditor()">Copy</button>
+  </div>
+  <textarea id="bigEditor"></textarea>
+  <div class="modal-actions">
+    <button class="ghost" onclick="closeModal('editorModalBg')">Cancel</button>
+    <button onclick="saveExpanded()">Save &amp; Close</button>
+  </div>
+</div></div>
+
+<div class="modal-bg" id="importModalBg"><div class="modal">
+  <h2>Import Backup</h2>
+  <p id="importMsg" class="muted" style="margin-top:0"></p>
+  <p style="font-size:13px;line-height:1.6">
+    <strong>Merge</strong> adds the imported data to what you have.<br>
+    <strong>Replace</strong> discards current data and loads only this backup.</p>
+  <div class="modal-actions">
+    <button class="ghost" onclick="cancelImport()">Cancel</button>
+    <button class="danger" onclick="applyImport('replace')">Replace</button>
+    <button onclick="applyImport('merge')">Merge</button>
+  </div>
+</div></div>
+
+<div class="modal-bg" id="copyModalBg"><div class="modal cch">
+  <h2 id="copyTitle" style="margin-top:0">Daily Summary</h2>
+  <p class="muted" style="margin-top:0">Read this off your second screen while keying into Axcess.</p>
+  <pre id="copyText"></pre>
+  <div class="modal-actions">
+    <button class="ghost" onclick="closeModal('copyModalBg')">Close</button>
+    <button onclick="doCopy()">Copy to Clipboard</button>
+  </div>
+</div></div>
+
+<div class="modal-bg" id="settingsModalBg"><div class="modal wide">
+  <h2 style="margin-top:0">☁ Cloud Sync &amp; Journal</h2>
+  <p class="muted" style="margin-top:0">Everyone using this build shares one private team gist; each person gets their own journal file inside it. Your <strong>Journal ID</strong> is all you need to restore on another machine. Time entries &amp; project notes only — keep client-identifying data out.</p>
+
+  <div class="sync-row" id="syncStatusRow">
+    <h3 id="syncStatusHead">Not connected</h3>
+    <p class="sync-note" id="syncStatusDetail"></p>
+    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap" id="syncConnectedBtns" class="hidden">
+      <button class="small" onclick="gistPull(true)">⬇ Pull from cloud</button>
+      <button class="small ghost" onclick="gistPush(true)">⬆ Push to cloud</button>
+      <label class="muted" style="display:inline-flex;align-items:center;gap:6px;font-size:13px;">
+        <input type="checkbox" id="autoSyncChk" style="width:auto" onchange="toggleCloudAuto()"> Auto pull on open / push on save
+      </label>
+    </div>
+  </div>
+
+  <div class="sync-row hidden" id="teamSetupBlock">
+    <h3>Team code</h3>
+    <p class="sync-note">Paste the one-time <strong>Team code</strong> your admin gave you. It connects this device to the shared team gist. You only do this once (or again after a token rotation).</p>
+    <input id="teamCodeInput" placeholder="PJT1-… (from your admin)" style="margin-top:8px" />
+    <div style="margin-top:8px"><button class="small" onclick="connectTeam()">Connect</button></div>
+    <p class="sync-note" style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px"><strong>First-time setup (admin)?</strong> Enter the team gist ID + token to connect. Your shareable Team code then appears in the box below.</p>
+    <input id="adminGistId" placeholder="Team gist ID" style="margin-top:6px" />
+    <input id="adminToken" placeholder="ghp_… (classic token, gist scope)" style="margin-top:6px" />
+    <div style="margin-top:8px"><button class="small ghost" onclick="adminConnect()">Connect</button></div>
+  </div>
+
+  <div class="sync-row hidden" id="teamManageBlock">
+    <h3>Team code (admin)</h3>
+    <p class="sync-note">This device's Team code — hand it to a coworker to onboard them, or keep it to reconnect after rotating the token. Treat it like a password.</p>
+    <div class="keybox"><code id="teamCodeText">—</code>
+      <button class="small ghost" onclick="copyTeamCode()">Copy</button>
+      <button class="small ghost" onclick="changeTeamCode()">Change / disconnect</button></div>
+  </div>
+
+  <div class="sync-row" id="syncKeyRow">
+    <h3>Your Journal ID</h3>
+    <p class="sync-note">Save this (password manager / sticky note). Paste it on another machine to pull your journal down. Anyone with the build + this ID can open your journal.</p>
+    <div class="keybox"><code id="journalKeyText">— not set up yet —</code>
+      <button class="small ghost" id="copyKeyBtn" onclick="copyJournalKey()">Copy</button></div>
+  </div>
+
+  <div id="syncSetupBlocks">
+    <div class="sync-row">
+      <h3>Create a new journal</h3>
+      <p class="sync-note">First time on this device? Make your journal — it adds your own file to the team gist from your current data.</p>
+      <input id="newJournalName" placeholder="Name (optional, e.g. Chad)" style="margin-top:8px" />
+      <div style="margin-top:8px"><button class="small" onclick="createJournal()">Create my journal</button></div>
+    </div>
+
+    <div class="sync-row">
+      <h3>Join an existing journal</h3>
+      <p class="sync-note">New machine, or recovering? Paste your Journal ID and pull it down.</p>
+      <input id="restoreId" placeholder="j… (your Journal ID)" style="margin-top:8px" />
+      <div style="margin-top:8px"><button class="small" onclick="restoreFromId()">Join &amp; pull</button>
+        <button class="small ghost" onclick="leaveJournal()" style="margin-left:6px">Leave journal (this device)</button></div>
+    </div>
+  </div>
+
+  <p class="sync-note" id="syncMsg" style="min-height:18px"></p>
+  <div class="modal-actions">
+    <button class="ghost" onclick="closeModal('settingsModalBg')">Close</button>
+  </div>
+</div></div>
+
+<div class="modal-bg" id="guideModalBg"><div class="modal wide">
+  <h2 style="margin-top:0">❔ How to use this app</h2>
+  <p class="muted" style="margin-top:0"><strong>Project Journal &amp; Timecard (PJT)</strong> tracks your projects, budgets, notes, and daily time. Your data stays on your machine and can sync to the shared team cloud. <strong>Keep client-identifying details out</strong> — the sync store is shared.</p>
+
+  <div class="sync-row">
+    <h3>Getting started</h3>
+    <p class="sync-note" style="font-size:13px;line-height:1.7">
+      1. The <strong>★ ACME Co — Example</strong> project is a fake sample so you can see how things work.<br>
+      2. Click <strong>☁ Sync</strong> → <strong>Create my journal</strong>, type your name, and <strong>save the Journal ID</strong> it gives you (that's your restore key).<br>
+      3. Tick <strong>Auto pull on open / push on save</strong>.<br>
+      4. When ready, select the ACME example → <strong>Delete Project</strong>, then <strong>New Project</strong> to start your own.
+    </p>
+  </div>
+
+  <div class="sync-row">
+    <h3>The three tabs</h3>
+    <p class="sync-note" style="font-size:13px;line-height:1.7">
+      <strong>Project Journal</strong> — your workpaper tracker. Make a project (Audit Template comes with standard sections; Blank starts empty). Each section has a <strong>Status</strong>, <strong>Budget/Actual/Variance</strong>, <strong>Preparer &amp; Reviewer notes</strong>, and <strong>Open Items</strong>. The stat cards summarize the whole project. Set a <strong>Time-card client code</strong> to link a project to your time card.<br><br>
+      <strong>Time Card</strong> — log your day by stop time. Define lettered <strong>codes</strong> (client + billing + billable/non-billable/unpaid). Give a code a <strong>linked project + section</strong> and those hours roll up into that section's Actual automatically.<br><br>
+      <strong>Daily W.I.N.</strong> — a quick "What's Important Now" checklist for the day.
+    </p>
+  </div>
+
+  <div class="sync-row">
+    <h3>Sync &amp; second computer</h3>
+    <p class="sync-note" style="font-size:13px;line-height:1.7">
+      With auto-sync on, everything stays current by itself; <strong>Pull</strong>/<strong>Push</strong> are there for manual syncs. On another machine: <strong>☁ Sync → Join an existing journal</strong>, paste your <strong>Journal ID</strong>, <strong>Join &amp; pull</strong>. If you edit on two machines without syncing between them, the next push warns before overwriting — <strong>Pull first</strong> if you see that.
+    </p>
+  </div>
+
+  <div class="sync-row">
+    <h3>Backups — your real safety net</h3>
+    <p class="sync-note" style="font-size:13px;line-height:1.7">
+      Sync is a convenience, not a guarantee. Use <strong>Save Journal Backup</strong> now and then for a <code>.json</code> snapshot; <strong>Import Backup</strong> loads one back (Merge or Replace). Backups never include sync credentials, so they're safe to keep.
+    </p>
+  </div>
+
+  <div class="sync-row">
+    <h3>If something looks off</h3>
+    <p class="sync-note" style="font-size:13px;line-height:1.7">
+      <strong>"Sync error / can't reach GitHub"</strong> — usually a blip; try Push/Pull again.<br>
+      <strong>Data looks missing</strong> — most often you're in a different browser profile (or incognito), which has separate storage. Confirm your usual profile, then <strong>Pull from cloud</strong>. This is why a periodic backup is worth the ten seconds.<br>
+      <strong>Fresh start</strong> — delete unwanted projects, or <strong>Import Backup → Replace</strong>.
+    </p>
+  </div>
+
+  <div class="modal-actions">
+    <button class="ghost" onclick="closeModal('guideModalBg')">Close</button>
+  </div>
+</div></div>
+
+<div class="modal-bg" id="conflictModalBg"><div class="modal">
+  <h2 style="margin-top:0">Sync conflict</h2>
+  <p class="sync-note" style="font-size:13.5px;line-height:1.7">Your journal was changed somewhere else (another window or device) since this one last synced. Here's which copy is newer:</p>
+  <div class="sync-row" id="conflictWhich" style="font-size:13px;line-height:1.6"></div>
+  <p class="sync-note" style="font-size:13px;line-height:1.7;margin-top:4px">There's no automatic merge, so one replaces the other:<br>
+    <strong>Push</strong> — send <em>this</em> window up, replacing the cloud copy.<br>
+    <strong>Pull</strong> — download the other version, replacing <em>this</em> window.
+  </p>
+  <div class="modal-actions">
+    <button class="ghost" onclick="conflictChoose('cancel')">Cancel</button>
+    <button class="ghost" onclick="conflictChoose('pull')">⬇ Pull (use cloud copy)</button>
+    <button class="danger" onclick="conflictChoose('push')">⬆ Push (overwrite cloud)</button>
+  </div>
+</div></div>
+
+<input type="file" id="importFile" class="hidden" accept=".json" />
+
+<script>
+/* =====================================================================
+   Project Journal & Timecard (PJT) v2.9 — Project Journal + Time Card, one file.
+   Single shared db, single localStorage key 'projtime_v8', JSON backups.
+   ===================================================================== */
+
+/* ---------- shared helpers ---------- */
+function uid(){ return Math.random().toString(36).slice(2,9); }
+function now(){ return new Date().toLocaleString(); }
+function iso(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function todayStr(){ return iso(new Date()); }
+function dowName(s){ const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d).toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'}); }
+function toMin(t){ if(!t) return null; const [h,m]=t.split(':').map(Number); return h*60+m; }
+function fmtH(min){ return (min/60).toFixed(2); }
+function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function download(name,text,mime){ const b=new Blob([text],{type:mime}); const a=document.createElement('a');
+  a.href=URL.createObjectURL(b); a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),800); }
+function updateModalLock(){ document.body.classList.toggle('modal-open', document.querySelectorAll('.modal-bg.open').length>0); }
+function openModal(id){ document.getElementById(id).classList.add('open'); updateModalLock(); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); updateModalLock(); }
+function toggleGearMenu(e){ if(e) e.stopPropagation(); document.getElementById('gearMenu').classList.toggle('open'); }
+function closeGearMenu(){ const m=document.getElementById('gearMenu'); if(m) m.classList.remove('open'); }
+function gearGo(fn){ closeGearMenu(); fn(); }
+let flashT=null;
+function flash(msg){ const t=document.getElementById('saveStatus'); t.textContent=msg; clearTimeout(flashT); flashT=setTimeout(()=>t.textContent='Saved',1400); }
+
+/* ---------- state ---------- */
+let db = {
+  version:'8.0', darkMode:false, lastEdit:0,
+  journal:{ projects:[], currentProjectId:null, collapsedGroups:{}, accordions:{projects:true,export:false} },
+  timecard:{ days:{}, currentDate:null },
+  sync:{ journalId:null, journalName:'', auto:false, lastSync:null, myHash:null }
+};
+let editorCtx=null, pendingImport=null, booting=false;
+
+/* ---------- persistence ---------- */
+let saveTimer=null;
+function save(){
+  const dot=document.getElementById('saveDot'), txt=document.getElementById('saveStatus');
+  dot.classList.add('saving'); txt.textContent='Saving…';
+  // Stamp genuine user edits only — not sync-driven saves (syncing) or the initial load (booting).
+  if(!syncing && !booting) db.lastEdit=Date.now();
+  try{ localStorage.setItem('projtime_v8', JSON.stringify(db)); }catch(e){ console.error(e); }
+  clearTimeout(saveTimer); saveTimer=setTimeout(()=>{ dot.classList.remove('saving'); txt.textContent='Saved'; },220);
+  if(typeof scheduleAutoPush==='function') scheduleAutoPush();
+}
+function load(){
+  booting=true;
+  let raw=localStorage.getItem('projtime_v8');
+  if(raw){ try{ db=mergeDefaults(JSON.parse(raw)); }catch(e){ console.error(e); } }
+  else { migrateFromOldKeys(); }
+  if(!db.journal.projects.length && !Object.keys(db.timecard.days).length) seedDemo();
+  if(!currentProject()) db.journal.currentProjectId=(db.journal.projects[0]||{}).id;
+  if(!db.timecard.currentDate) db.timecard.currentDate=todayStr();
+  runMigrations();
+  document.body.classList.toggle('dark', !!db.darkMode);
+  document.getElementById('monthPicker').value=(db.timecard.currentDate||todayStr()).slice(0,7);
+  applyAccordionState(); renderJournal(); renderTimecard(); save();
+  booting=false;
+  syncBoot();
+}
+function mergeDefaults(p){
+  if(p.lastEdit==null) p.lastEdit=0;
+  p.journal=Object.assign({projects:[],currentProjectId:null,collapsedGroups:{},accordions:{projects:true,export:false}}, p.journal||{});
+  p.timecard=Object.assign({days:{},currentDate:null}, p.timecard||{});
+  p.sync=Object.assign({journalId:null,journalName:'',auto:false,lastSync:null,myHash:null}, p.sync||{});
+  return p;
+}
+// One-time cleanup of old numbered-section names; also fixes any time-card links to them.
+function migrateLegacySectionNames(){
+  const map={ '4':'4 - Financial Statements', '5':'5 - Profit Vision', '5 - FS / Financial Statement Workpapers':'5 - Profit Vision' };
+  db.journal.projects.forEach(p=>{
+    p.sections.forEach(s=>{
+      const nn=map[s.name]; if(!nn) return;
+      if(p.sections.some(x=>x!==s && x.name===nn)) return; // don't create a duplicate
+      const old=s.name; s.name=nn;
+      Object.values(db.timecard.days).forEach(day=>day.codes.forEach(c=>{ if(c.linkProjectId===p.id && c.linkSection===old) c.linkSection=nn; }));
+    });
+  });
+}
+// Ensure the firm-standard Technical Review section exists on real (non-empty) projects, once.
+function ensureTechReviewSection(){
+  if(db.journal.techReviewMigrated) return;
+  db.journal.projects.forEach(p=>{ if(p.sections.length && !p.sections.some(s=>s.name==='T - Technical Review')) p.sections.push(makeSection('T - Technical Review',false)); });
+  db.journal.techReviewMigrated=true;
+}
+function migrateStatuses(){ db.journal.projects.forEach(p=>p.sections.forEach(s=>{
+  if(STATUS_MAP[s.status]) s.status=STATUS_MAP[s.status];
+  if(STATUSES.indexOf(s.status)<0) s.status='In Prep'; })); }
+function runMigrations(){ db.journal.projects.forEach(normalizeProject); migrateLegacySectionNames(); ensureTechReviewSection(); migrateStatuses(); }
+// Best-effort pickup of the older standalone apps (works only if the browser shares file:// storage).
+function migrateFromOldKeys(){
+  try{ const j=localStorage.getItem('pj73'); if(j){ const o=JSON.parse(j);
+    db.journal.projects=(o.projects||[]); db.journal.currentProjectId=o.currentProjectId;
+    db.journal.collapsedGroups=o.collapsedGroups||{}; db.journal.accordions=o.accordions||db.journal.accordions;
+    if(o.darkMode) db.darkMode=true; } }catch(e){}
+  try{ const t=localStorage.getItem('timecard_v1'); if(t){ const o=JSON.parse(t);
+    db.timecard.days=o.days||{}; db.timecard.currentDate=o.currentDate; if(o.darkMode) db.darkMode=true; } }catch(e){}
+}
+
+/* =====================================================================
+   JOURNAL
+   ===================================================================== */
+const AUDIT_TEMPLATE=['1 - Permanent File','2 - General File','3 - Trial Balance and Reports','4 - Financial Statements','5 - Profit Vision','T - Technical Review',
+ 'A - Cash','B - Receivables','C - Notes Receivable','D - Inventory','E - Prepaids','F - Investments','G - Fixed Assets','J - Other Assets',
+ 'M - Payables','N - Other Current Liabilities','O - Notes Payable & Long-Term Debt','P - Income Taxes','Q - Equity',
+ 'S - Leases (Capital & Operating)','W - Work in Progress','X - Income & Expense Accounts','Y - R&D Credit','Z - Tax Workpapers'];
+const GROUPS=[
+ {id:'g1',label:'Numbered & Review Sections',prefixes:['1','2','3','4','5','T']},
+ {id:'g2',label:'Assets',prefixes:['A','B','C','D','E','F','G','J']},
+ {id:'g3',label:'Liabilities',prefixes:['M','N','O','P']},
+ {id:'g4',label:'Equity',prefixes:['Q']},
+ {id:'g5',label:'Income & Expenses',prefixes:['S','W','X','Y','Z']},
+ {id:'g6',label:'Custom',prefixes:[]}];
+const PREFIX_GROUP={}, PREFIX_ORDER={}; let _o=0;
+GROUPS.forEach(g=>g.prefixes.forEach(p=>{PREFIX_GROUP[p]=g.id;PREFIX_ORDER[p]=_o++;}));
+const STATUSES=['In Prep','Tech Review','Review Comments','Complete'];
+const STATUS_MAP={ 'Open':'In Prep','In Progress':'In Prep','Review Needed':'Review Comments' };
+
+function extractPrefix(n){ const m=String(n||'').trim().match(/^([0-9A-Za-z]+)/); return m?m[1]:''; }
+function groupIdFor(s){ if(s.custom) return 'g6'; return PREFIX_GROUP[extractPrefix(s.name)]||'g6'; }
+function sortKey(s,i){ if(!s.custom){ const o=PREFIX_ORDER[extractPrefix(s.name)]; if(o!==undefined) return o; } return 1000+i; }
+function makeSection(name,custom=false){ return {id:uid(),name,status:'In Prep',budget:0,actual:0,preparer:'',reviewer:'',scratch:'',custom,updated:'',timeSync:{}}; }
+function createAuditProject(name='New Project'){ return {id:uid(),name,clientCode:'',role:'both',archived:false,notes:'',createdDate:now(),modifiedDate:now(),template:'audit',sections:AUDIT_TEMPLATE.map(n=>makeSection(n,false))}; }
+function createBlankProject(name='Blank Project'){ return {id:uid(),name,clientCode:'',role:'both',archived:false,notes:'',createdDate:now(),modifiedDate:now(),template:'blank',sections:[]}; }
+function currentProject(){ return db.journal.projects.find(p=>p.id===db.journal.currentProjectId)||db.journal.projects[0]; }
+function normalizeProject(p){
+  if(p.clientCode===undefined) p.clientCode='';
+  if(p.notes===undefined) p.notes='';
+  if(p.role===undefined) p.role='both';
+  if(p.archived===undefined) p.archived=false;
+  (p.sections||[]).forEach(s=>{ if(!s.timeSync) s.timeSync={}; });
+}
+function syncedTotal(s){ let t=0; const m=s.timeSync||{}; for(const k in m) t+=Number(m[k]||0); return t; }
+function effActual(s){ return Number(s.actual||0)+syncedTotal(s); }
+
+function renderJournal(){
+  const p=currentProject(); if(!p) return;
+  document.getElementById('projectTitle').textContent=p.name;
+  document.getElementById('createdDate').textContent=p.createdDate||'--';
+  document.getElementById('modifiedDate').textContent=p.modifiedDate||'--';
+  document.getElementById('clientCodeInput').value=p.clientCode||'';
+  document.getElementById('clientCodeHint').textContent=(p.clientCode||'').trim()
+    ? 'In time-card library — syncable as “'+p.clientCode.trim()+'”'
+    : 'Blank = notes-only. Hidden from the time card, never syncs.';
+  document.getElementById('projectNotes').value=p.notes||'';
+  document.getElementById('roleSelect').value=p.role||'both';
+  document.getElementById('archiveChk').checked=!!p.archived;
+  document.getElementById('journalTable').className='role-'+(p.role||'both');
+  document.getElementById('showArchivedChk').checked=!!db.journal.showArchived;
+  const notesOpen=!!db.journal.notesOpen;
+  document.getElementById('projectNotesPanel').classList.toggle('hidden',!notesOpen);
+  document.getElementById('notesToggle').textContent='📝 Project Notes '+(notesOpen?'▾':'▸');
+  renderProjectPicker(); renderRecent(); renderStats(); renderSections();
+}
+function updateRole(v){ currentProject().role=v; currentProject().modifiedDate=now(); renderJournal(); save(); }
+function updateArchived(c){ currentProject().archived=!!c; currentProject().modifiedDate=now(); renderJournal(); renderTimecard(); save(); }
+function toggleProjectNotes(){ db.journal.notesOpen=!db.journal.notesOpen; renderJournal(); save(); }
+function updateProjectNotes(v){ currentProject().notes=v; currentProject().modifiedDate=now(); renderRecent(); save(); }
+function openProjectNotesEditor(){ const p=currentProject(); editorCtx={scope:'project'};
+  document.getElementById('editorTitle').textContent='Project Notes — '+p.name;
+  document.getElementById('editorMeta').innerHTML='Project: '+escapeHtml(p.name)+(p.clientCode?'<br>Client code: '+escapeHtml(p.clientCode):'')+'<br>Created: '+escapeHtml(p.createdDate)+'<br>Modified: '+escapeHtml(p.modifiedDate);
+  const ed=document.getElementById('bigEditor'); ed.value=p.notes||''; openModal('editorModalBg'); setTimeout(()=>ed.focus(),50); }
+function renderProjectPicker(){
+  const sel=document.getElementById('projectPicker'); sel.innerHTML='';
+  const showArch=!!db.journal.showArchived;
+  db.journal.projects.forEach(p=>{
+    if(p.archived && !showArch && p.id!==db.journal.currentProjectId) return;
+    const o=document.createElement('option'); o.value=p.id;
+    o.textContent=p.name+(p.clientCode?(' ['+p.clientCode+']'):'')+(p.archived?' · archived':'');
+    sel.appendChild(o); });
+  sel.value=currentProject().id;
+  sel.onchange=e=>{ db.journal.currentProjectId=e.target.value; renderJournal(); save(); };
+}
+function renderRecent(){
+  const wrap=document.getElementById('recentProjects'); wrap.innerHTML='';
+  const showArch=!!db.journal.showArchived;
+  [...db.journal.projects].filter(p=>showArch || !p.archived || p.id===db.journal.currentProjectId)
+    .sort((a,b)=>new Date(b.modifiedDate)-new Date(a.modifiedDate)).slice(0,5).forEach(p=>{
+    const d=document.createElement('div'); d.className='recent-project'+(p.id===currentProject().id?' active':'');
+    d.innerHTML='<strong></strong><br><small class="muted"></small>';
+    d.querySelector('strong').textContent=p.name+(p.archived?' · archived':''); d.querySelector('small').textContent=p.modifiedDate||'';
+    d.onclick=()=>{ db.journal.currentProjectId=p.id; renderJournal(); save(); }; wrap.appendChild(d);
+  });
+}
+function toggleShowArchived(c){ db.journal.showArchived=!!c; renderJournal(); save(); }
+function rollForwardProject(){
+  const src=currentProject(); if(!src) return;
+  const name=prompt('Name for the new (next-year) project:', src.name); if(name===null) return;
+  if(!confirm('Create "'+(name.trim()||src.name)+'" with the same sections, budgets, client code and role (actuals, notes & open items cleared), and archive "'+src.name+'"?')) return;
+  const np=JSON.parse(JSON.stringify(src));
+  np.id=uid(); np.name=name.trim()||src.name; np.archived=false; np.createdDate=now(); np.modifiedDate=now();
+  np.sections.forEach(s=>{ s.id=uid(); s.actual=0; s.preparer=''; s.reviewer=''; s.scratch=''; s.status='In Prep'; s.updated=''; s.timeSync={}; }); // keep name, budget, custom; carry project notes (contacts)
+  src.archived=true;
+  db.journal.projects.push(np); db.journal.currentProjectId=np.id;
+  renderJournal(); renderTimecard(); save();
+}
+function renderStats(){
+  const p=currentProject();
+  const budget=p.sections.reduce((a,b)=>a+Number(b.budget||0),0);
+  const actual=p.sections.reduce((a,b)=>a+effActual(b),0);
+  const complete=p.sections.filter(s=>s.status==='Complete').length;
+  document.getElementById('totalBudget').textContent=budget.toFixed(1);
+  document.getElementById('totalActual').textContent=actual.toFixed(1);
+  document.getElementById('varianceTotal').textContent=(budget-actual).toFixed(1);
+  document.getElementById('completeCount').textContent=complete;
+  document.getElementById('openCount').textContent=p.sections.length-complete;
+  const b=document.getElementById('healthBadge'); b.className='health';
+  if(budget<=0){ b.classList.add('none'); b.textContent='No Budget Set'; }
+  else{ const r=actual/budget; if(r<=0.9){b.classList.add('under');b.textContent='Under Budget';}
+    else if(r<=1.0){b.classList.add('near');b.textContent='Near Budget';} else {b.classList.add('over');b.textContent='Over Budget';} }
+}
+function buildGroups(sections){
+  const map={}; GROUPS.forEach(g=>map[g.id]={def:g,rows:[]});
+  sections.forEach((s,i)=>map[groupIdFor(s)].rows.push({s,idx:i}));
+  GROUPS.forEach(g=>map[g.id].rows.sort((a,b)=>sortKey(a.s,a.idx)-sortKey(b.s,b.idx)));
+  return GROUPS.map(g=>map[g.id]).filter(g=>g.rows.length);
+}
+function renderSections(){
+  const tbody=document.getElementById('sectionsTable'); tbody.innerHTML='';
+  const search=document.getElementById('searchBox').value.toLowerCase().trim(); const searching=search.length>0;
+  buildGroups(currentProject().sections).forEach(group=>{
+    const rows=group.rows.filter(r=>!searching||JSON.stringify(r.s).toLowerCase().includes(search));
+    if(searching && !rows.length) return;
+    const collapsed=!searching && !!db.journal.collapsedGroups[group.def.id];
+    const gtr=document.createElement('tr'); gtr.className='group-row'+(collapsed?' collapsed':'');
+    const gtd=document.createElement('td'); gtd.colSpan=8;
+    gtd.innerHTML='<span class="chev">▼</span> <span></span><span class="group-count"></span>';
+    gtd.querySelectorAll('span')[1].textContent=group.def.label;
+    gtd.querySelector('.group-count').textContent='('+rows.length+')';
+    gtd.onclick=()=>toggleGroup(group.def.id); gtr.appendChild(gtd); tbody.appendChild(gtr);
+    if(collapsed) return;
+    rows.forEach(r=>tbody.appendChild(buildSectionRow(r.s)));
+  });
+}
+function buildSectionRow(s){
+  const tr=document.createElement('tr');
+  const variance=Number(s.budget||0)-effActual(s);
+
+  const tdName=document.createElement('td'); tdName.className='section-col';
+  const nm=document.createElement('div'); nm.textContent=(s.custom?'★ ':'')+s.name;
+  const upd=document.createElement('div'); upd.style.cssText='font-size:12px;color:var(--muted);margin-top:6px'; upd.textContent='Updated: '+(s.updated||'--');
+  const acts=document.createElement('div'); acts.className='cell-actions'; acts.style.marginTop='5px';
+  const ren=document.createElement('button'); ren.className='small ghost'; ren.textContent='✎ Rename'; ren.onclick=()=>renameSection(s.id); acts.appendChild(ren);
+  if(s.custom){ const dl=document.createElement('button'); dl.className='small ghost'; dl.textContent='✕ Delete'; dl.onclick=()=>deleteSection(s.id); acts.appendChild(dl); }
+  tdName.append(nm,upd,acts);
+
+  const tdStatus=document.createElement('td'); const sel=document.createElement('select');
+  STATUSES.forEach(st=>{ const o=document.createElement('option'); o.textContent=st; if(s.status===st)o.selected=true; sel.appendChild(o); });
+  sel.onchange=()=>updateField(s.id,'status',sel.value); tdStatus.appendChild(sel);
+
+  const tdB=document.createElement('td'); const inB=document.createElement('input'); inB.type='number'; inB.value=s.budget;
+  inB.onchange=()=>updateField(s.id,'budget',inB.value); tdB.appendChild(inB);
+
+  const tdA=document.createElement('td'); const inA=document.createElement('input'); inA.type='number'; inA.value=s.actual;
+  inA.onchange=()=>updateField(s.id,'actual',inA.value); tdA.appendChild(inA);
+  const syn=syncedTotal(s); if(syn>0){ const sn=document.createElement('div'); sn.className='synced-note';
+    sn.textContent='+'+syn.toFixed(2)+' synced = '+effActual(s).toFixed(2); tdA.appendChild(sn); }
+
+  const tdV=document.createElement('td'); tdV.textContent=variance.toFixed(2);
+  tdV.className=variance>0?'var-pos':(variance<0?'var-neg':'');
+
+  const tdPrep=noteCell(s,'preparer'); tdPrep.classList.add('col-prep');
+  const tdRev=noteCell(s,'reviewer'); tdRev.classList.add('col-rev');
+  tr.append(tdName,tdStatus,tdB,tdA,tdV, tdPrep, tdRev, noteCell(s,'scratch',true));
+  return tr;
+}
+function noteCell(s,field,withCopy=false){
+  const td=document.createElement('td'); const ta=document.createElement('textarea'); ta.className='note-box'; ta.value=s[field]||'';
+  ta.onchange=()=>updateField(s.id,field,ta.value);
+  const actions=document.createElement('div'); actions.className='cell-actions';
+  const exp=document.createElement('button'); exp.className='small ghost'; exp.textContent='Expand ↗'; exp.onclick=()=>openExpanded(s.id,field); actions.appendChild(exp);
+  const cp=document.createElement('button'); cp.className='small ghost'; cp.textContent='Copy'; cp.onclick=()=>copyText(s[field]||''); actions.appendChild(cp);
+  td.append(ta,actions); return td;
+}
+function updateField(id,key,val){
+  const s=currentProject().sections.find(x=>x.id===id); if(!s) return;
+  if(key==='budget'||key==='actual') val=Number(val||0);
+  s[key]=val; s.updated=now(); currentProject().modifiedDate=now();
+  renderStats(); renderRecent(); if(key==='budget'||key==='actual') renderSections(); save();
+}
+function updateClientCode(v){ currentProject().clientCode=(v||'').trim(); currentProject().modifiedDate=now(); renderJournal(); renderTimecard(); save(); }
+function toggleGroup(g){ db.journal.collapsedGroups[g]=!db.journal.collapsedGroups[g]; renderSections(); save(); }
+function expandAll(){ GROUPS.forEach(g=>db.journal.collapsedGroups[g.id]=false); renderSections(); save(); }
+function collapseAll(){ GROUPS.forEach(g=>db.journal.collapsedGroups[g.id]=true); renderSections(); save(); }
+function applyAccordionState(){ document.querySelectorAll('.card[data-acc]').forEach(c=>{ const k=c.getAttribute('data-acc');
+  c.classList.toggle('collapsed', !(db.journal.accordions&&db.journal.accordions[k])); }); }
+document.querySelectorAll('.card[data-acc] .card-header').forEach(h=>h.addEventListener('click',()=>{
+  const c=h.parentElement,k=c.getAttribute('data-acc'); c.classList.toggle('collapsed');
+  if(!db.journal.accordions) db.journal.accordions={}; db.journal.accordions[k]=!c.classList.contains('collapsed'); save(); }));
+
+function openNewProjectModal(){ document.getElementById('newProjectName').value=''; document.getElementById('newClientCode').value='';
+  document.getElementById('templateType').value='audit'; document.getElementById('newRole').value='both'; openModal('projectModalBg'); setTimeout(()=>document.getElementById('newProjectName').focus(),50); }
+function createProject(){
+  const name=document.getElementById('newProjectName').value.trim()||'New Project';
+  const code=document.getElementById('newClientCode').value.trim();
+  const type=document.getElementById('templateType').value;
+  const p=(type==='blank')?createBlankProject(name):createAuditProject(name); p.clientCode=code; p.role=document.getElementById('newRole').value||'both';
+  db.journal.projects.push(p); db.journal.currentProjectId=p.id; closeModal('projectModalBg'); renderJournal(); save();
+}
+function renameProject(){ const n=prompt('Rename project',currentProject().name); if(!n) return; currentProject().name=n.trim(); currentProject().modifiedDate=now(); renderJournal(); save(); }
+function duplicateProject(){ const c=JSON.parse(JSON.stringify(currentProject())); c.id=uid(); c.name+=' Copy'; c.createdDate=now(); c.modifiedDate=now();
+  c.sections.forEach(s=>{ s.id=uid(); s.timeSync={}; }); db.journal.projects.push(c); db.journal.currentProjectId=c.id; renderJournal(); save(); }
+function deleteProject(){ if(db.journal.projects.length===1){ alert('Cannot delete the last project.'); return; }
+  if(confirm('Delete "'+currentProject().name+'"?')){ const id=currentProject().id; db.journal.projects=db.journal.projects.filter(p=>p.id!==id);
+    Object.values(db.timecard.days).forEach(day=>day.codes.forEach(c=>{ if(c.linkProjectId===id){ c.linkProjectId=''; c.linkSection=''; } }));
+    db.journal.currentProjectId=db.journal.projects[0].id; renderJournal(); renderTimecard(); save(); } }
+function addCustomSection(){ const n=prompt('Custom section name (e.g. "C1 - Cleanup Review")'); if(!n) return;
+  currentProject().sections.push(makeSection(n.trim(),true)); currentProject().modifiedDate=now(); renderJournal(); save(); }
+function renameSection(id){ const p=currentProject(); const s=p.sections.find(x=>x.id===id); if(!s) return;
+  const n=prompt('Rename section', s.name); if(n===null) return; const nn=n.trim(); if(!nn || nn===s.name) return;
+  if(p.sections.some(x=>x!==s && x.name===nn)){ alert('A section with that name already exists in this project.'); return; }
+  const old=s.name; s.name=nn;
+  // keep any time-card sync links pointed at this section
+  Object.values(db.timecard.days).forEach(day=>day.codes.forEach(c=>{ if(c.linkProjectId===p.id && c.linkSection===old) c.linkSection=nn; }));
+  p.modifiedDate=now(); renderJournal(); renderTimecard(); save(); }
+function deleteSection(id){ const p=currentProject(); const s=p.sections.find(x=>x.id===id); if(!s) return;
+  if(!confirm('Delete section "'+s.name+'"? Any synced time on it will be removed.')) return;
+  p.sections=p.sections.filter(x=>x.id!==id);
+  Object.values(db.timecard.days).forEach(day=>day.codes.forEach(c=>{ if(c.linkProjectId===p.id && c.linkSection===s.name){ c.linkSection=''; } }));
+  p.modifiedDate=now(); renderJournal(); renderTimecard(); save(); }
+
+/* markdown export */
+function projectToMarkdown(p){
+  let md='';
+  const budget=p.sections.reduce((a,b)=>a+Number(b.budget||0),0); const actual=p.sections.reduce((a,b)=>a+effActual(b),0);
+  md+='# '+p.name+'\n\n'+(p.clientCode?('- Client code: '+p.clientCode+'\n'):'')+'- Created: '+p.createdDate+'\n- Modified: '+p.modifiedDate+'\n\n';
+  if((p.notes||'').trim()) md+='## Project Notes\n\n'+p.notes+'\n\n';
+  md+='## Summary\n\n| Section | Budget | Actual | Variance |\n|---|---:|---:|---:|\n';
+  buildGroups(p.sections).forEach(g=>g.rows.forEach(r=>{ const a=effActual(r.s);
+    md+='| '+r.s.name+' | '+r.s.budget+' | '+a.toFixed(2)+' | '+(Number(r.s.budget||0)-a).toFixed(2)+' |\n'; }));
+  md+='| **Total** | **'+budget.toFixed(1)+'** | **'+actual.toFixed(1)+'** | **'+(budget-actual).toFixed(1)+'** |\n\n';
+  buildGroups(p.sections).forEach(g=>{ md+='## '+g.def.label+'\n\n'; g.rows.forEach(r=>{ const s=r.s;
+    md+='### '+s.name+'\n- Status: '+s.status+'\n- Budget: '+s.budget+' · Actual: '+effActual(s).toFixed(2)+'\n\n';
+    if(p.role!=='reviewer' && (s.preparer||'').trim()) md+='**Preparer Notes**\n\n'+s.preparer+'\n\n';
+    if(p.role!=='preparer' && (s.reviewer||'').trim()) md+='**Reviewer Notes**\n\n'+s.reviewer+'\n\n';
+    if((s.scratch||'').trim()) md+='**Open Items**\n\n'+s.scratch+'\n\n'; }); });
+  return md;
+}
+function safeName(s){ return String(s||'project').replace(/[^a-z0-9]+/gi,'-').replace(/^-+|-+$/g,'').toLowerCase()||'project'; }
+function exportProjectMarkdown(){ const p=currentProject(); if(!p) return;
+  download('journal-'+safeName(p.name)+'-'+todayStr()+'.md', projectToMarkdown(p), 'text/markdown'); }
+function exportJournalMarkdown(){
+  const md=db.journal.projects.map(p=>projectToMarkdown(p)).join('\n---\n\n');
+  download('work-journal-all-'+todayStr()+'.md', md, 'text/markdown'); }
+// Open Items across the current project, formatted for pasting into a client email.
+function copyOpenItems(){ const p=currentProject();
+  const plain=[p.name+' — Open Items',''], html=['<b>'+escapeHtml(p.name)+' — Open Items</b>',''];
+  let any=false;
+  buildGroups(p.sections).forEach(g=>g.rows.forEach(r=>{ const s=r.s; const t=(s.scratch||'').trim(); if(!t) return; any=true;
+    plain.push(s.name+':', t, ''); html.push('<b>'+escapeHtml(s.name)+':</b>', escapeHtml(t).replace(/\n/g,'<br>'), ''); }));
+  if(!any){ plain.push('(No open items recorded.)'); html.push('(No open items recorded.)'); }
+  showCopy('Open Items — '+p.name, plain.join('\n'), html.join('\n')); }
+
+/* expanded editor (shared) */
+function openExpanded(id,field){ const s=currentProject().sections.find(x=>x.id===id); if(!s) return; editorCtx={scope:'section',id,field};
+  const L={preparer:'Preparer Notes',reviewer:'Reviewer Notes',scratch:'Open Items'}; const p=currentProject();
+  document.getElementById('editorTitle').textContent=L[field]+' — '+s.name;
+  document.getElementById('editorMeta').innerHTML='Project: '+escapeHtml(p.name)+'<br>Section: '+escapeHtml(s.name)+'<br>Created: '+escapeHtml(p.createdDate)+'<br>Modified: '+escapeHtml(p.modifiedDate);
+  const ed=document.getElementById('bigEditor'); ed.value=s[field]||''; openModal('editorModalBg'); setTimeout(()=>ed.focus(),50); }
+function saveExpanded(){ if(!editorCtx) return;
+  if(editorCtx.scope==='project'){ currentProject().notes=document.getElementById('bigEditor').value; currentProject().modifiedDate=now(); }
+  else { const s=currentProject().sections.find(x=>x.id===editorCtx.id);
+    if(s){ s[editorCtx.field]=document.getElementById('bigEditor').value; s.updated=now(); currentProject().modifiedDate=now(); } }
+  editorCtx=null; closeModal('editorModalBg'); renderJournal(); save(); }
+function copyEditor(){ copyText(document.getElementById('bigEditor').value); }
+function mdWrap(tok){ const ed=document.getElementById('bigEditor'); const a=ed.selectionStart,b=ed.selectionEnd; const sel=ed.value.slice(a,b)||'text';
+  ed.value=ed.value.slice(0,a)+tok+sel+tok+ed.value.slice(b); ed.focus(); ed.selectionStart=a+tok.length; ed.selectionEnd=a+tok.length+sel.length; }
+function mdBullets(){ const ed=document.getElementById('bigEditor'); const a=ed.selectionStart,b=ed.selectionEnd; const blk=ed.value.slice(a,b)||'item';
+  const out=blk.split('\n').map(l=>l.trim()?('- '+l):l).join('\n'); ed.value=ed.value.slice(0,a)+out+ed.value.slice(b); ed.focus(); }
+
+/* =====================================================================
+   TIME CARD
+   ===================================================================== */
+const TYPES=['billable','nonbillable','unpaid'];
+const TYPE_LABEL={billable:'Billable',nonbillable:'Non-bill',unpaid:'Unpaid'};
+function standardCodes(){ return [
+  {letter:'v',client:'Lunch',billing:'',type:'unpaid',linkProjectId:'',linkSection:''},
+  {letter:'w',client:'Break',billing:'',type:'nonbillable',linkProjectId:'',linkSection:''},
+  {letter:'x',client:'Admin',billing:'',type:'nonbillable',linkProjectId:'',linkSection:''},
+  {letter:'y',client:'Training',billing:'',type:'nonbillable',linkProjectId:'',linkSection:''},
+  {letter:'z',client:'Nonchargeable',billing:'',type:'nonbillable',linkProjectId:'',linkSection:''}]; }
+
+function getDay(date,create=true){ if(!db.timecard.days[date]&&create) db.timecard.days[date]={dayStart:'08:00',codes:standardCodes(),entries:[],win:[]}; return db.timecard.days[date]; }
+function curDay(){ return getDay(db.timecard.currentDate); }
+function entryStart(day,i){ return i===0?day.dayStart:day.entries[i-1].stop; }
+function entryMinutes(day,i){ const s=toMin(entryStart(day,i)),e=toMin(day.entries[i].stop); if(s==null||e==null) return 0; return Math.max(0,e-s); }
+function codeFor(day,letter){ return day.codes.find(c=>c.letter===letter); }
+function codeLabel(c){ return c?(c.client+(c.billing?(' '+c.billing):'')):'(unassigned)'; }
+function dayTotals(day){ const t={billable:0,nonbillable:0,unpaid:0}; const byCode={};
+  day.entries.forEach((en,i)=>{ const m=entryMinutes(day,i); const c=codeFor(day,en.code); const tp=c?c.type:'billable'; t[tp]+=m; byCode[en.code]=(byCode[en.code]||0)+m; });
+  return {t,byCode}; }
+function syncableProjects(){ return db.journal.projects.filter(p=>(p.clientCode||'').trim() && !p.archived)
+  .sort((a,b)=>(a.clientCode||a.name).localeCompare(b.clientCode||b.name,undefined,{sensitivity:'base'})); }
+
+// Parse quick 10-key entry: "1045"->10:45, "830"->08:30, "5p"->17:00, "10:45 AM" ok. Returns "HH:MM" 24h or ''.
+function parseTimeInput(raw){
+  if(raw==null) return ''; let s=String(raw).trim().toLowerCase(); if(!s) return '';
+  let ap=''; if(/[ap]m?$/.test(s)){ ap=s.indexOf('p')>-1?'p':'a'; s=s.replace(/\s*[ap]m?$/,''); }
+  s=s.replace(/[^\d:]/g,''); let h,m;
+  if(s.indexOf(':')>-1){ const parts=s.split(':'); h=parseInt(parts[0]||'0',10); m=parseInt(parts[1]||'0',10); }
+  else { const d=s.replace(/\D/g,''); if(!d) return '';
+    if(d.length<=2){ h=parseInt(d,10); m=0; }
+    else if(d.length===3){ h=parseInt(d.slice(0,1),10); m=parseInt(d.slice(1),10); }
+    else { h=parseInt(d.slice(0,2),10); m=parseInt(d.slice(2,4),10); } }
+  if(isNaN(h)) return ''; if(isNaN(m)) m=0;
+  if(ap==='p' && h<12) h+=12; if(ap==='a' && h===12) h=0;
+  if(h>23)h=23; if(h<0)h=0; if(m>59)m=59; if(m<0)m=0;
+  return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
+}
+function fmt12(hhmm){ const mm=toMin(hhmm); if(mm==null) return ''; let h=Math.floor(mm/60),m=mm%60;
+  const ap=h>=12?'PM':'AM'; let h12=h%12; if(h12===0)h12=12; return h12+':'+String(m).padStart(2,'0')+' '+ap; }
+
+function renderTimecard(){
+  const day=curDay();
+  day.codes.sort((a,b)=>a.letter.localeCompare(b.letter));  // keep code picker + codes table alphabetical
+  document.getElementById('datePicker').value=db.timecard.currentDate;
+  document.getElementById('dowLabel').textContent=dowName(db.timecard.currentDate);
+  document.getElementById('dayStart').value=fmt12(day.dayStart);
+  document.getElementById('autoSyncBtn').textContent='Auto-sync: '+(db.timecard.autoSync?'On':'Off');
+  document.getElementById('autoSyncBtn').classList.toggle('small', true);
+  renderLoggedDays(); renderLog(); renderCodesTable(); renderTotals(); renderWinMini();
+  scheduleAutoSync();
+}
+function renderLoggedDays(){
+  const wrap=document.getElementById('loggedDays'); if(!wrap) return; wrap.innerHTML='';
+  const dates=Object.keys(db.timecard.days).filter(d=>{ const day=db.timecard.days[d];
+    return day.entries.some((en,i)=>entryMinutes(day,i)>0); }).sort().reverse().slice(0,10);
+  dates.forEach(d=>{ const [y,m,da]=d.split('-').map(Number); const chip=document.createElement('div');
+    chip.className='daychip'+(d===db.timecard.currentDate?' active':'');
+    chip.textContent=new Date(y,m-1,da).toLocaleDateString(undefined,{month:'short',day:'numeric'});
+    chip.onclick=()=>{ db.timecard.currentDate=d; renderTimecard(); save(); }; wrap.appendChild(chip); });
+}
+function renderLog(){ const day=curDay(); const lb=document.getElementById('logBody'); lb.innerHTML='';
+  day.entries.forEach((en,i)=>lb.appendChild(logRow(day,en,i))); }
+function renderCodesTable(){ const day=curDay(); const {byCode}=dayTotals(day);
+  const cb=document.getElementById('codeBody'); cb.innerHTML=''; day.codes.forEach(c=>cb.appendChild(codeRow(day,c,byCode[c.letter]||0))); scheduleAutoSync(); }
+function renderTotals(){ const {t}=dayTotals(curDay());
+  document.getElementById('cBill').textContent=fmtH(t.billable);
+  document.getElementById('cNon').textContent=fmtH(t.nonbillable);
+  document.getElementById('cUnpaid').textContent=fmtH(t.unpaid);
+  document.getElementById('cTotal').textContent=fmtH(t.billable+t.nonbillable); }
+function focusLogCell(rowIndex,which){ const rows=document.querySelectorAll('#logBody tr'); const tr=rows[rowIndex]; if(!tr) return;
+  const el=which==='stop'?tr.querySelector('input[data-stop]'):tr.querySelector('select'); if(el){ el.focus(); try{el.select&&el.select();}catch(e){} } }
+function advanceFromStop(i){ const day=curDay();
+  if(i>=day.entries.length-1){ const last=day.entries[day.entries.length-1];
+    day.entries.push({id:uid(),code:(day.codes[0]||{letter:'x'}).letter,stop:last?last.stop:day.dayStart,desc:''}); }
+  renderTimecard(); save(); focusLogCell(i+1,'select'); }
+function logRow(day,en,i){
+  const tr=document.createElement('tr');
+  const tdCode=document.createElement('td'); const sel=document.createElement('select');
+  day.codes.forEach(c=>{ const o=document.createElement('option'); o.value=c.letter; o.textContent=c.letter+' — '+codeLabel(c); if(c.letter===en.code)o.selected=true; sel.appendChild(o); });
+  // code change refreshes totals/codes only (NOT the log) so keyboard focus survives for fast Tab entry
+  sel.onchange=()=>{ en.code=sel.value; save(); renderCodesTable(); renderTotals(); }; tdCode.appendChild(sel);
+
+  const tdStart=document.createElement('td'); tdStart.className='start-cell'; tdStart.textContent=fmt12(entryStart(day,i))||'--';
+
+  const tdStop=document.createElement('td');
+  const stop=document.createElement('input'); stop.type='text'; stop.inputMode='numeric'; stop.setAttribute('data-stop','1');
+  stop.placeholder='1045'; stop.style.width='104px'; stop.value=fmt12(en.stop);
+  let skipBlur=false;
+  const commit=()=>{ en.stop=parseTimeInput(stop.value); };
+  stop.addEventListener('focus',()=>{ try{stop.select();}catch(e){} });
+  stop.addEventListener('blur',()=>{ if(skipBlur){ skipBlur=false; return; } commit(); renderTimecard(); save(); });
+  stop.addEventListener('keydown',e=>{
+    if(e.key==='Enter' || (e.key==='Tab' && !e.shiftKey)){ e.preventDefault(); skipBlur=true; commit(); save(); advanceFromStop(i); }
+  });
+  tdStop.appendChild(stop);
+
+  const tdDur=document.createElement('td'); tdDur.className='num dur-cell'; tdDur.textContent=fmtH(entryMinutes(day,i));
+  const sM=toMin(entryStart(day,i)), eM=toMin(en.stop);
+  if(sM!=null && eM!=null && eM<sM){ tdDur.classList.add('var-neg'); tdDur.title='Stop is before start'; tdDur.textContent='⚠ 0.00'; stop.style.borderColor='var(--danger)'; }
+  const tdDesc=document.createElement('td'); const desc=document.createElement('input'); desc.value=en.desc||''; desc.placeholder='(optional note)';
+  desc.onchange=()=>{ en.desc=desc.value; save(); }; tdDesc.appendChild(desc);
+  const tdDel=document.createElement('td'); const del=document.createElement('button'); del.className='ghost small'; del.textContent='✕';
+  del.onclick=()=>{ day.entries.splice(i,1); renderTimecard(); save(); }; tdDel.appendChild(del);
+  tr.append(tdCode,tdStart,tdStop,tdDur,tdDesc,tdDel); return tr;
+}
+function codeRow(day,c,mins){
+  const tr=document.createElement('tr');
+  const tdL=document.createElement('td'); tdL.className='codecell'; tdL.textContent=c.letter;
+  const tdClient=document.createElement('td'); const ci=document.createElement('input'); ci.value=c.client||''; ci.placeholder='Client';
+  ci.onchange=()=>{ c.client=ci.value; renderTimecard(); save(); }; tdClient.appendChild(ci);
+  const tdBill=document.createElement('td'); const bi=document.createElement('input'); bi.value=c.billing||''; bi.placeholder='C3'; bi.style.width='62px';
+  bi.onchange=()=>{ c.billing=bi.value; renderTimecard(); save(); }; tdBill.appendChild(bi);
+  const tdType=document.createElement('td'); const ts=document.createElement('select');
+  TYPES.forEach(tp=>{ const o=document.createElement('option'); o.value=tp; o.textContent=TYPE_LABEL[tp]; if(c.type===tp)o.selected=true; ts.appendChild(o); });
+  ts.onchange=()=>{ c.type=ts.value; renderTimecard(); save(); }; tdType.appendChild(ts);
+
+  // link cell
+  const tdLink=document.createElement('td'); tdLink.className='linkcell';
+  const projSel=document.createElement('select');
+  const none=document.createElement('option'); none.value=''; none.textContent='— no sync —'; projSel.appendChild(none);
+  const projOpts=syncableProjects().slice();
+  if(c.linkProjectId){ const lp=db.journal.projects.find(x=>x.id===c.linkProjectId); if(lp && projOpts.indexOf(lp)<0) projOpts.push(lp); }
+  projOpts.forEach(p=>{ const o=document.createElement('option'); o.value=p.id; o.textContent=(p.clientCode||p.name)+(p.archived?' (hidden)':''); if(c.linkProjectId===p.id)o.selected=true; projSel.appendChild(o); });
+  projSel.onchange=()=>{ c.linkProjectId=projSel.value; c.linkSection='';
+    const p=db.journal.projects.find(x=>x.id===c.linkProjectId);
+    if(p){ c.client=p.clientCode||p.name; c.billing=''; }  // link drives display; clear stale bill until a section is picked
+    renderTimecard(); save(); };
+  tdLink.appendChild(projSel);
+
+  const linkedProj=db.journal.projects.find(x=>x.id===c.linkProjectId);
+  if(linkedProj){
+    const secSel=document.createElement('select');
+    const sn=document.createElement('option'); sn.value=''; sn.textContent='— pick section —'; secSel.appendChild(sn);
+    linkedProj.sections.forEach(s=>{ const o=document.createElement('option'); o.value=s.name; o.textContent=s.name; if(c.linkSection===s.name)o.selected=true; secSel.appendChild(o); });
+    secSel.onchange=()=>{ c.linkSection=secSel.value;
+      if(c.linkSection) c.billing=extractPrefix(c.linkSection);  // refresh bill to match the chosen section
+      renderTimecard(); save(); };
+    tdLink.appendChild(secSel);
+  }
+  // status pill
+  const pill=document.createElement('span');
+  if(!c.linkProjectId){ pill.className='pill none'; pill.textContent='not synced'; }
+  else if(!c.linkSection){ pill.className='pill warn'; pill.textContent='pick a section'; }
+  else { pill.className='pill ok'; pill.textContent='↪ '+(linkedProj?linkedProj.clientCode||linkedProj.name:'?')+' / '+c.linkSection; }
+  tdLink.appendChild(pill);
+
+  const tdH=document.createElement('td'); tdH.className='num'; tdH.innerHTML='<span class="typedot t-'+c.type+'"></span>'+fmtH(mins);
+  const tdDel=document.createElement('td'); const del=document.createElement('button'); del.className='ghost small'; del.textContent='✕';
+  del.onclick=()=>{ if(day.entries.some(e=>e.code===c.letter)){ alert('Code in use in the log. Reassign those blocks first.'); return; }
+    day.codes=day.codes.filter(x=>x!==c); renderTimecard(); save(); }; tdDel.appendChild(del);
+
+  tr.append(tdL,tdClient,tdBill,tdType,tdLink,tdH,tdDel); return tr;
+}
+function addEntry(){ const day=curDay(); const last=day.entries.length?day.entries[day.entries.length-1].stop:day.dayStart;
+  const first=(day.codes[0]||{letter:'x'}).letter; day.entries.push({id:uid(),code:first,stop:last,desc:''}); renderTimecard(); save();
+  focusLogCell(day.entries.length-1,'select'); }
+function addCode(){ const day=curDay(); const used=new Set(day.codes.map(c=>c.letter)); let letter='a';
+  for(const ch of 'abcdefghijklmnopqrstu'){ if(!used.has(ch)){ letter=ch; break; } }
+  day.codes.unshift({letter,client:'',billing:'',type:'billable',linkProjectId:'',linkSection:''}); renderTimecard(); save(); }
+function updateDayStart(v){ const t=parseTimeInput(v); curDay().dayStart=t||'08:00'; renderTimecard(); save(); }
+function carryForward(){ const dates=Object.keys(db.timecard.days).filter(d=>d<db.timecard.currentDate).sort();
+  if(!dates.length){ alert('No earlier day to copy from.'); return; }
+  curDay().codes=JSON.parse(JSON.stringify(db.timecard.days[dates[dates.length-1]].codes)); renderTimecard(); save(); }
+function onDateChange(){ db.timecard.currentDate=document.getElementById('datePicker').value; renderTimecard(); save(); }
+function shiftDay(n){ const [y,m,d]=db.timecard.currentDate.split('-').map(Number); const dt=new Date(y,m-1,d); dt.setDate(dt.getDate()+n); db.timecard.currentDate=iso(dt); renderTimecard(); save(); }
+function goToday(){ db.timecard.currentDate=todayStr(); renderTimecard(); save(); }
+
+/* ---- the sync engine: overwrite this date's contribution everywhere, then repost ---- */
+// Pure data mutation — no rendering. Returns {count,total}.
+function applySyncForDay(date){
+  const day=db.timecard.days[date]; if(!day) return {count:0,total:0};
+  const {byCode}=dayTotals(day);
+  db.journal.projects.forEach(p=>p.sections.forEach(s=>{ if(s.timeSync) delete s.timeSync[date]; }));
+  const targets=[];
+  day.codes.forEach(c=>{ if(!c.linkProjectId||!c.linkSection) return; const mins=byCode[c.letter]||0; if(mins<=0) return;
+    let t=targets.find(x=>x.pid===c.linkProjectId&&x.sec===c.linkSection); if(!t){ t={pid:c.linkProjectId,sec:c.linkSection,hours:0}; targets.push(t); } t.hours+=mins/60; });
+  let count=0,total=0;
+  targets.forEach(t=>{ const p=db.journal.projects.find(x=>x.id===t.pid); if(!p) return; const s=p.sections.find(x=>x.name===t.sec); if(!s) return;
+    if(!s.timeSync) s.timeSync={}; s.timeSync[date]=Number(t.hours.toFixed(2)); p.modifiedDate=now(); count++; total+=t.hours; });
+  return {count,total};
+}
+function syncDayToJournal(){
+  const r=applySyncForDay(db.timecard.currentDate);
+  save(); renderJournal(); renderTimecard();
+  flash(r.count?('Synced '+r.total.toFixed(2)+' h to '+r.count+' section(s)'):'Nothing linked to sync today');
+}
+let autoSyncTimer=null;
+function scheduleAutoSync(){ if(!db.timecard||!db.timecard.autoSync) return; clearTimeout(autoSyncTimer);
+  autoSyncTimer=setTimeout(()=>{ const r=applySyncForDay(db.timecard.currentDate); save(); renderJournal();
+    if(r.count) flash('Auto-synced '+r.total.toFixed(2)+' h'); }, 600); }
+function toggleAutoSync(){ db.timecard.autoSync=!db.timecard.autoSync;
+  document.getElementById('autoSyncBtn').textContent='Auto-sync: '+(db.timecard.autoSync?'On':'Off');
+  if(db.timecard.autoSync){ const r=applySyncForDay(db.timecard.currentDate); renderJournal(); renderTimecard(); flash(r.count?('Synced '+r.total.toFixed(2)+' h'):'Auto-sync on'); }
+  save(); }
+
+/* ---- month report ---- */
+function renderReport(){
+  const ym=document.getElementById('monthPicker').value||todayStr().slice(0,7);
+  const totals={billable:0,nonbillable:0,unpaid:0}; const byClient={}; let dayCount=0;
+  Object.keys(db.timecard.days).filter(d=>d.startsWith(ym)).forEach(d=>{ const day=db.timecard.days[d]; let used=false;
+    day.entries.forEach((en,i)=>{ const m=entryMinutes(day,i); if(m>0)used=true; const c=codeFor(day,en.code); const tp=c?c.type:'billable'; totals[tp]+=m;
+      const key=(codeLabel(c)||'(unassigned)')+'|'+tp; if(!byClient[key]) byClient[key]={label:codeLabel(c),type:tp,mins:0}; byClient[key].mins+=m; });
+    if(used) dayCount++; });
+  document.getElementById('rBill').textContent=fmtH(totals.billable);
+  document.getElementById('rNon').textContent=fmtH(totals.nonbillable);
+  document.getElementById('rUnpaid').textContent=fmtH(totals.unpaid);
+  document.getElementById('rTotal').textContent=fmtH(totals.billable+totals.nonbillable)+' · '+dayCount+'d';
+  document.getElementById('rRange').textContent=ym;
+  const grand=totals.billable+totals.nonbillable+totals.unpaid||1;
+  const rows=Object.values(byClient).sort((a,b)=>b.mins-a.mins);
+  const body=document.getElementById('reportBody'); body.innerHTML='';
+  rows.forEach(r=>{ const tr=document.createElement('tr'); const pct=r.mins/grand*100;
+    tr.className='clickrow'; tr.title='Click for all entry notes + linked journal notes';
+    tr.innerHTML='<td>'+escapeHtml(r.label)+' <span class="muted" style="font-size:11px">▸</span></td><td><span class="typedot t-'+r.type+'"></span>'+TYPE_LABEL[r.type]+'</td><td class="num">'+fmtH(r.mins)+'</td><td><div class="bar"><i class="'+(r.type==='billable'?'b':'nb')+'" style="width:'+pct+'%"></i></div></td>';
+    tr.onclick=()=>codeBreakdown(r.label,r.type);
+    body.appendChild(tr); });
+  if(!rows.length) body.innerHTML='<tr><td colspan="4" class="muted">No entries this month.</td></tr>';
+}
+
+/* ---- copy helpers ---- */
+let copyBuffer='';
+function notesForCode(day,letter){ const seen=new Set(),out=[];
+  day.entries.forEach(en=>{ if(en.code===letter){ const d=(en.desc||'').trim(); if(d && !seen.has(d)){ seen.add(d); out.push(d); } } }); return out; }
+// Aggregate every time-entry note for one billing code across the selected month,
+// plus the linked journal section's preparer / reviewer / open-items notes. CYA gold.
+function codeBreakdown(label,type){
+  const ym=document.getElementById('monthPicker').value||todayStr().slice(0,7);
+  const byDate={}; const links=new Map(); let totalMins=0;
+  Object.keys(db.timecard.days).filter(d=>d.startsWith(ym)).sort().forEach(d=>{
+    const day=db.timecard.days[d];
+    day.entries.forEach((en,i)=>{ const m=entryMinutes(day,i); if(m<=0) return;
+      const c=codeFor(day,en.code); const lbl=codeLabel(c)||'(unassigned)'; const tp=c?c.type:'billable';
+      if(lbl!==label || tp!==type) return;
+      totalMins+=m; (byDate[d]=byDate[d]||[]).push({mins:m,desc:(en.desc||'').trim()});
+      if(c && c.linkProjectId && c.linkSection){ const k=c.linkProjectId+'|'+c.linkSection;
+        if(!links.has(k)) links.set(k,{projId:c.linkProjectId,section:c.linkSection}); }
+    });
+  });
+  const head=label+'  ·  '+TYPE_LABEL[type]+'  ·  '+fmtH(totalMins)+' hrs in '+ym;
+  const plain=[head,'','TIME ENTRY NOTES'], html=['<b>'+escapeHtml(head)+'</b>','','<b>TIME ENTRY NOTES</b>'];
+  const dates=Object.keys(byDate).sort();
+  if(!dates.length){ plain.push('  (no time entries)'); html.push('  (no time entries)'); }
+  dates.forEach(d=>{ const dl=dowName(d)+' '+d; plain.push(dl); html.push('<b>'+escapeHtml(dl)+'</b>');
+    byDate[d].forEach(it=>{ const note=it.desc||'(no note)'; const line='  • '+fmtH(it.mins)+' hr — '+note;
+      plain.push(line); html.push('  • '+escapeHtml(line.trim())); }); });
+  if(links.size){
+    links.forEach(({projId,section})=>{ const p=db.journal.projects.find(x=>x.id===projId); if(!p) return;
+      const s=p.sections.find(x=>x.name===section); if(!s) return;
+      const lh='LINKED JOURNAL — '+section+'  ('+p.name+')';
+      plain.push('',lh); html.push('','<b>'+escapeHtml(lh)+'</b>');
+      let any=false;
+      [['Preparer Notes',s.preparer],['Reviewer Notes',s.reviewer],['Open Items',s.scratch]].forEach(([t,v])=>{
+        v=(v||'').trim(); if(!v) return; any=true;
+        plain.push(t+':','  '+v.replace(/\n/g,'\n  '));
+        html.push('<b>'+escapeHtml(t)+':</b>',escapeHtml(v).replace(/\n/g,'<br>')); });
+      if(!any){ plain.push('  (no journal notes on this section yet)'); html.push('  (no journal notes on this section yet)'); }
+    });
+  } else { plain.push('','(this code isn\'t linked to a journal section)'); html.push('','<span class="muted">(this code isn\'t linked to a journal section)</span>'); }
+  showCopy('Code detail — '+label, plain.join('\n'), html.join('\n'));
+}
+function copySummary(){ const day=curDay(); const {t,byCode}=dayTotals(day);
+  const rows=day.codes.filter(c=>c.type!=='unpaid'&&(byCode[c.letter]||0)>0).map(c=>({letter:c.letter,label:codeLabel(c),mins:byCode[c.letter]})).sort((a,b)=>a.label.localeCompare(b.label,undefined,{sensitivity:'base'}));
+  const dow=dowName(db.timecard.currentDate);
+  const totals='Billable '+fmtH(t.billable)+'  ·  Non-billable '+fmtH(t.nonbillable)+'  ·  Total '+fmtH(t.billable+t.nonbillable);
+  const plain=[dow,''], html=[escapeHtml(dow),''];
+  rows.forEach(r=>{ const head=r.label+' — '+fmtH(r.mins)+' hrs';
+    plain.push(head); html.push('<b>'+escapeHtml(head)+'</b>');
+    notesForCode(day,r.letter).forEach(n=>{ plain.push('    • '+n); html.push('    • '+escapeHtml(n)); }); });
+  plain.push('', totals); html.push('', '<b>'+escapeHtml(totals)+'</b>');
+  ensureWin(day); const wins=day.win.filter(w=>w&&(w.text||'').trim());
+  if(wins.length){ plain.push('', "What's Important Now:"); html.push('', "<b>What's Important Now:</b>");
+    wins.forEach(w=>{ const mk=w.done?'[x]':'[ ]'; plain.push('  '+mk+' '+w.text); html.push('  '+mk+' '+escapeHtml(w.text)); }); }
+  showCopy('Daily Summary for CCH', plain.join('\n'), html.join('\n')); }
+function copyReport(){ const rows=[...document.querySelectorAll('#reportBody tr')].map(tr=>{ const td=tr.querySelectorAll('td'); if(td.length<3) return ''; return td[0].textContent+' — '+td[2].textContent; }).filter(Boolean);
+  showCopy('Month Report ('+document.getElementById('monthPicker').value+')', rows.join('\n')); }
+function showCopy(title,text,html){ copyBuffer=text; document.getElementById('copyTitle').textContent=title;
+  const pre=document.getElementById('copyText'); if(html!=null) pre.innerHTML=html; else pre.textContent=text; openModal('copyModalBg'); }
+function doCopy(){ copyText(copyBuffer); }
+function copyText(text){ if(navigator.clipboard?.writeText){ navigator.clipboard.writeText(text).then(()=>flash('Copied')).catch(()=>fbCopy(text)); } else fbCopy(text); }
+function fbCopy(text){ const ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');flash('Copied');}catch(e){} document.body.removeChild(ta); }
+
+/* =====================================================================
+   IMPORT / EXPORT / CHROME
+   ===================================================================== */
+// Clone db without the sync block — credentials never go into backups OR the cloud copy.
+function dbWithoutSecrets(){ const c=JSON.parse(JSON.stringify(db)); delete c.sync; return c; }
+function exportBackup(){ download('work-journal-backup-'+todayStr()+'.json', JSON.stringify(dbWithoutSecrets(),null,2), 'application/json'); }
+function triggerImport(){ document.getElementById('importFile').click(); }
+document.getElementById('importFile').addEventListener('change',e=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader();
+  r.onload=ev=>{ try{ const data=JSON.parse(ev.target.result); const norm=normalizeImport(data);
+    if(!norm.projects.length && !Object.keys(norm.days).length){ alert('No journal or time-card data found in that file.'); return; }
+    pendingImport=norm; document.getElementById('importMsg').textContent='Found '+norm.projects.length+' project(s) and '+Object.keys(norm.days).length+' time-card day(s).'; openModal('importModalBg');
+  }catch(err){ console.error(err); alert('Import failed — not valid JSON.'); } };
+  r.readAsText(f); e.target.value=''; });
+function cancelImport(){ pendingImport=null; closeModal('importModalBg'); }
+function applyImport(mode){ if(!pendingImport){ closeModal('importModalBg'); return; } const inc=pendingImport;
+  if(mode==='replace'){ if(inc.projects.length){ db.journal.projects=inc.projects; db.journal.currentProjectId=inc.projects[0].id; }
+    if(Object.keys(inc.days).length){ db.timecard.days=inc.days; } }
+  else { const names=new Set(db.journal.projects.map(p=>p.name)); inc.projects.forEach(p=>{ if(names.has(p.name)) p.name+=' (imported)'; db.journal.projects.push(p); });
+    db.timecard.days=Object.assign({}, db.timecard.days, inc.days); if(!db.journal.currentProjectId && db.journal.projects[0]) db.journal.currentProjectId=db.journal.projects[0].id; }
+  db.journal.techReviewMigrated=false; runMigrations();
+  pendingImport=null; closeModal('importModalBg'); renderJournal(); renderTimecard(); save();
+  flash('Imported '+inc.projects.length+' project(s), '+Object.keys(inc.days).length+' day(s)'); }
+
+// Accept combined v8, journal (v6.1/v7/array), or time-card backups.
+function normalizeImport(data){
+  const out={projects:[], days:{}};
+  if(data && data.journal && data.timecard){ out.projects=(data.journal.projects||[]).map(migrateV7Project); out.days=data.timecard.days||{}; return out; }
+  if(data && Array.isArray(data.projects)){ out.projects=data.projects.map(migrateV7Project); }
+  else if(Array.isArray(data)){ out.projects=data.map(migrateV7Project); }
+  else if(data && typeof data==='object' && data.days && typeof data.days==='object'){ out.days=data.days; }
+  else if(data && typeof data==='object'){
+    // could be a v6.1 journal (object keyed by project name) — detect project-shaped values
+    const vals=Object.values(data); if(vals.length && vals.every(v=>v&&typeof v==='object'&&('sections'in v||'customSections'in v))){ out.projects=Object.keys(data).map(n=>migrateV6Project(n,data[n])); }
+  }
+  return out;
+}
+function migrateV6Project(name,p){ p=p||{}; const set=new Set((p.customSections||[]).map(s=>String(s).trim())); const obj=p.sections||{};
+  const sections=Object.keys(obj).map(sn=>{ const s=obj[sn]||{}; return {id:uid(),name:sn,status:s.status||'Open',budget:Number(s.budget||0),actual:Number(s.actual||0),
+    preparer:s.prep??s.preparer??'',reviewer:s.review??s.reviewer??'',scratch:s.scratch??'',custom:set.has(String(sn).trim()),updated:s.updated||'',timeSync:{}}; });
+  return {id:uid(),name:String(name).trim()||'Untitled',clientCode:'',notes:'',createdDate:p.created||now(),modifiedDate:p.modified||now(),template:'imported',sections}; }
+function migrateV7Project(p){ p=p||{}; if(!p.id)p.id=uid(); if(p.clientCode===undefined)p.clientCode=''; if(p.notes===undefined)p.notes=''; if(!p.createdDate)p.createdDate=p.created||now(); if(!p.modifiedDate)p.modifiedDate=p.modified||now();
+  p.sections=(Array.isArray(p.sections)?p.sections:[]).map(s=>({id:s.id||uid(),name:s.name||'Unnamed',status:s.status||'Open',budget:Number(s.budget||0),actual:Number(s.actual||0),
+    preparer:s.preparer??s.prep??'',reviewer:s.reviewer??s.review??'',scratch:s.scratch??'',custom:!!s.custom,updated:s.updated||'',timeSync:s.timeSync||{}}));
+  delete p.created; delete p.modified; return p; }
+
+/* ---- Daily W.I.N. ---- */
+function ensureWin(day){ if(!Array.isArray(day.win)) day.win=[]; }
+function winSlot(day,i){ ensureWin(day); while(day.win.length<=i) day.win.push({text:'',done:false}); return day.win[i]; }
+function renderWin(){
+  const day=curDay(); ensureWin(day);
+  document.getElementById('winDate').value=db.timecard.currentDate;
+  document.getElementById('winDow').textContent=dowName(db.timecard.currentDate);
+  const wrap=document.getElementById('winRows'); wrap.innerHTML='';
+  for(let i=0;i<5;i++){
+    const item=day.win[i]||{text:'',done:false};
+    const row=document.createElement('div'); row.style.cssText='display:flex;align-items:center;gap:12px;padding:11px 8px;border-bottom:1px solid var(--border)';
+    const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=!!item.done; cb.style.cssText='width:20px;height:20px;flex:0 0 auto;cursor:pointer';
+    cb.onchange=()=>{ winSlot(day,i).done=cb.checked; renderWin(); renderWinMini(); save(); };
+    const tx=document.createElement('input'); tx.type='text'; tx.className='wintext'; tx.value=item.text||''; tx.placeholder="What's important now #"+(i+1)+'…'; tx.style.fontSize='15px';
+    if(item.done){ tx.style.textDecoration='line-through'; tx.style.opacity='0.55'; }
+    let skip=false;
+    tx.onchange=()=>{ if(skip){ skip=false; return; } winSlot(day,i).text=tx.value; renderWin(); renderWinMini(); save(); };
+    tx.addEventListener('keydown',e=>{ if(e.key==='Enter' || (e.key==='Tab' && !e.shiftKey)){ e.preventDefault(); skip=true;
+      winSlot(day,i).text=tx.value; save(); updateWinProgress(); renderWinMini();
+      const fields=document.querySelectorAll('#winRows .wintext'); if(fields[i+1]){ fields[i+1].focus(); try{fields[i+1].select();}catch(_){} } } });
+    row.append(cb,tx); wrap.appendChild(row);
+  }
+  const items=day.win.filter(w=>w&&(w.text||'').trim());
+  document.getElementById('winProgress').textContent=items.length?(items.filter(w=>w.done).length+' / '+items.length+' done'):'';
+}
+function updateWinProgress(){ const day=curDay(); ensureWin(day); const items=day.win.filter(w=>w&&(w.text||'').trim());
+  const el=document.getElementById('winProgress'); if(el) el.textContent=items.length?(items.filter(w=>w.done).length+' / '+items.length+' done'):''; }
+function copyWin(){ const day=curDay(); ensureWin(day); const items=day.win.filter(w=>w&&(w.text||'').trim());
+  const head="Daily W.I.N. — "+dowName(db.timecard.currentDate);
+  const plain=[head,''], html=['<b>'+escapeHtml(head)+'</b>',''];
+  if(!items.length){ plain.push('(none set)'); html.push('(none set)'); }
+  items.forEach(w=>{ const mk=w.done?'[x]':'[ ]'; plain.push(mk+' '+w.text); html.push(mk+' '+escapeHtml(w.text)); });
+  showCopy('Daily W.I.N.', plain.join('\n'), html.join('\n')); }
+function renderWinMini(){
+  const day=curDay(); ensureWin(day);
+  const rows=document.getElementById('winMiniRows'); if(!rows) return; rows.innerHTML='';
+  const items=day.win.filter(w=>w&&(w.text||'').trim());
+  if(!items.length){ rows.innerHTML='<div class="muted" style="padding:8px 6px">No W.I.N. set for this day — add up to five in the Daily W.I.N. tab.</div>';
+    document.getElementById('winMiniProgress').textContent=''; return; }
+  day.win.forEach((w,i)=>{ if(!w||!(w.text||'').trim()) return;
+    const row=document.createElement('div'); row.style.cssText='display:flex;align-items:center;gap:10px;padding:7px 6px;border-bottom:1px solid var(--border)';
+    const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=!!w.done; cb.style.cssText='width:18px;height:18px;flex:0 0 auto;cursor:pointer';
+    cb.onchange=()=>{ winSlot(day,i).done=cb.checked; renderWinMini(); save(); };
+    const tx=document.createElement('span'); tx.textContent=w.text; if(w.done){ tx.style.textDecoration='line-through'; tx.style.opacity='0.55'; }
+    row.append(cb,tx); rows.appendChild(row); });
+  document.getElementById('winMiniProgress').textContent=items.filter(w=>w.done).length+' / '+items.length+' done';
+}
+function onWinDateChange(){ db.timecard.currentDate=document.getElementById('winDate').value; renderWin(); save(); }
+function winShift(n){ const [y,m,d]=db.timecard.currentDate.split('-').map(Number); const dt=new Date(y,m-1,d); dt.setDate(dt.getDate()+n); db.timecard.currentDate=iso(dt); renderWin(); save(); }
+function winToday(){ db.timecard.currentDate=todayStr(); renderWin(); save(); }
+
+/* ---- chrome: tabs, dark, modals ---- */
+function switchMain(name){ document.querySelectorAll('.maintab').forEach(t=>t.classList.toggle('active',t.dataset.m===name));
+  document.querySelectorAll('.main-pane').forEach(p=>p.classList.remove('active')); document.getElementById('main-'+name).classList.add('active');
+  if(name==='timecard') renderTimecard(); else if(name==='win') renderWin(); else renderJournal(); }
+function switchTcTab(name){ document.querySelectorAll('#main-timecard .tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
+  document.querySelectorAll('#main-timecard .tab-pane').forEach(p=>p.classList.remove('active')); document.getElementById('tc-'+name).classList.add('active');
+  if(name==='report') renderReport(); }
+function toggleDark(){ db.darkMode=!db.darkMode; document.body.classList.toggle('dark',db.darkMode); save(); }
+
+/* =====================================================================
+   CLOUD SYNC (B-mode) — ONE shared team Gist; each person = one file.
+   Config (team gist ID + token) is entered by each user ONCE as a "Team
+   code" in Sync settings — it is NOT baked into the build. That keeps the
+   file / exe / repo free of secrets, and lets you rotate the token by
+   handing out a new code (no rebuild, no touching anyone's file).
+   An optional BAKED_CONFIG can hardcode it for a private build if you ever
+   prefer that; leave it blank to use the Team-code flow.
+   Each install owns 'journal-<journalId>.json' in the one gist; PATCH only
+   touches your file, so coworkers never clobber each other.
+   ===================================================================== */
+const BAKED_CONFIG = { gistId:'', token:'' };   // optional; blank = use the Team code
+const TEAM_KEY = 'pj_team';                      // localStorage slot (kept out of journal data)
+
+function getTeam(){
+  if(BAKED_CONFIG.gistId && BAKED_CONFIG.token) return { gistId:BAKED_CONFIG.gistId, token:BAKED_CONFIG.token };
+  try{ const o=JSON.parse(localStorage.getItem(TEAM_KEY)||'null'); if(o&&o.g&&o.t) return { gistId:o.g, token:o.t }; }catch(e){}
+  return { gistId:'', token:'' };
+}
+function setTeam(gistId,token){ localStorage.setItem(TEAM_KEY, JSON.stringify({g:gistId,t:token})); }
+function clearTeam(){ localStorage.removeItem(TEAM_KEY); }
+function encTeam(gistId,token){ return 'PJT1-'+btoa(JSON.stringify({g:gistId,t:token})).replace(/=+$/,''); }
+function decTeam(code){ code=String(code||'').trim(); if(code.startsWith('PJT1-')) code=code.slice(5);
+  const pad=code.length%4? '='.repeat(4-code.length%4):''; const o=JSON.parse(atob(code+pad));
+  if(!o.g||!o.t) throw new Error('bad code'); return { gistId:o.g, token:o.t }; }
+
+let pushTimer=null, syncing=false;
+function syncMsg(m,isErr){ const el=document.getElementById('syncMsg'); if(el){ el.textContent=m||''; el.style.color=isErr?'var(--danger)':'var(--muted)'; } }
+function isConfigured(){ const t=getTeam(); return !!(t.gistId && t.token); }
+function isConnected(){ return !!(isConfigured() && db.sync && db.sync.journalId); }
+function myFile(){ return 'journal-'+db.sync.journalId+'.json'; }
+function newJournalId(){ return 'j'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function hashStr(s){ let h=5381; for(let i=0;i<s.length;i++){ h=((h<<5)+h)^s.charCodeAt(i); } return (h>>>0).toString(36); }
+function setSyncDot(state){ const d=document.getElementById('syncDot'), s=document.getElementById('syncStatus'); if(!d) return;
+  d.className='sync-dot'+(state==='on'?' on':state==='busy'?' busy':state==='err'?' err':'');
+  const map={on:'Synced',busy:'Syncing…',err:'Sync error',off:'Sync off'};
+  if(s) s.textContent=(state==='on'&&db.sync.lastSync)? ('Synced '+new Date(db.sync.lastSync).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})) : (map[state]||'Sync off'); }
+
+async function ghFetch(path, opts={}){
+  let r;
+  try{
+    r=await fetch('https://api.github.com'+path, Object.assign({}, opts, {
+      headers: Object.assign({ 'Authorization':'Bearer '+getTeam().token, 'Accept':'application/vnd.github+json',
+        'X-GitHub-Api-Version':'2022-11-28' }, opts.headers||{}) }));
+  }catch(e){ throw new Error('Could not reach GitHub (network/CORS). If running as file://, your browser may block it — the desktop build fixes this.'); }
+  if(r.status===401) throw new Error('Token rejected (401) — your Team code has a wrong or expired token. Ask your admin for a fresh code.');
+  if(r.status===403) throw new Error('Forbidden (403) — the token lacks the gist scope or is rate-limited.');
+  if(r.status===404) throw new Error('Gist not found (404) — the Team code has a wrong gist ID.');
+  if(!r.ok){ let t=''; try{t=await r.text();}catch(_){} throw new Error('GitHub '+r.status+': '+t.slice(0,160)); }
+  return r;
+}
+
+// Read one file's text out of a gist GET response (handles GitHub's >1MB truncation).
+async function readGistFile(gistJson, fname){
+  const f=gistJson.files && gistJson.files[fname]; if(!f) return null;
+  if(f.truncated && f.raw_url) return await (await fetch(f.raw_url)).text();
+  return f.content;
+}
+
+async function createJournal(){
+  if(!isConfigured()){ syncMsg('Enter your Team code first (below) to connect to the team gist.',true); return; }
+  const name=(document.getElementById('newJournalName').value||'').trim();
+  const id=newJournalId(); syncing=true; setSyncDot('busy'); syncMsg('Creating your journal in the team gist…');
+  try{
+    db.sync.journalId=id; db.sync.journalName=name||('Journal '+id.slice(-4)); db.sync.auto=true;
+    const content=JSON.stringify(dbWithoutSecrets());
+    const body={ files:{ [myFile()]:{ content } } };   // PATCH adds just my file; others untouched
+    const j=await (await ghFetch('/gists/'+getTeam().gistId,{ method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) })).json();
+    db.sync.myHash=hashStr(await readGistFile(j, myFile())||content); db.sync.lastSync=Date.now();
+    document.getElementById('newJournalName').value=''; save(); renderSync(); setSyncDot('on');
+    syncMsg('Journal created. Your Journal ID is shown above — save it to restore on another machine.');
+  }catch(e){ db.sync.journalId=null; setSyncDot('err'); syncMsg(e.message,true); }
+  finally{ syncing=false; }
+}
+
+async function gistPush(manual){
+  if(!isConnected()){ if(manual) syncMsg('No journal connected.',true); return; }
+  syncing=true; setSyncDot('busy'); if(manual) syncMsg('Pushing…');
+  try{
+    // Conflict guard keyed to MY file only (coworkers writing other files won't trip it).
+    const cur=await readGistFile(await (await ghFetch('/gists/'+getTeam().gistId)).json(), myFile());
+    if(cur!=null && db.sync.myHash && hashStr(cur)!==db.sync.myHash){
+      let cloudEdit=0; try{ cloudEdit=(JSON.parse(cur)||{}).lastEdit||0; }catch(_){}
+      if(!manual){
+        // Auto-sync: never pop a surprise dialog mid-edit. Pause and flag it.
+        setSyncDot('err'); document.getElementById('syncStatus').textContent='Out of sync — open Sync';
+        syncing=false; return;
+      }
+      const choice=await showConflict(cloudEdit, db.lastEdit||0);
+      if(choice==='pull'){ syncing=false; setSyncDot('on'); await gistPull(true); return; }
+      if(choice!=='push'){ setSyncDot('on'); syncMsg('Push cancelled.'); return; }
+      // choice==='push' → fall through and overwrite the cloud copy
+    }
+    const content=JSON.stringify(dbWithoutSecrets());
+    const j=await (await ghFetch('/gists/'+getTeam().gistId,{ method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ files:{ [myFile()]:{ content } } }) })).json();
+    db.sync.myHash=hashStr(await readGistFile(j, myFile())||content); db.sync.lastSync=Date.now();
+    save(); setSyncDot('on'); renderSync(); if(manual) syncMsg('Pushed to cloud.');
+  }catch(e){ setSyncDot('err'); syncMsg(e.message,true); }
+  finally{ syncing=false; }
+}
+let conflictResolver=null;
+function fmtWhen(ms){ if(!ms) return 'unknown'; const d=new Date(ms), diff=Date.now()-ms;
+  const mins=Math.round(diff/60000); let rel;
+  if(mins<1) rel='just now'; else if(mins<60) rel=mins+' min ago';
+  else if(mins<1440) rel=Math.round(mins/60)+' hr ago'; else rel=Math.round(mins/1440)+' day(s) ago';
+  return d.toLocaleString()+' ('+rel+')'; }
+function showConflict(cloudEdit, localEdit){
+  return new Promise(res=>{
+    conflictResolver=res;
+    const el=document.getElementById('conflictWhich');
+    let verdict;
+    if(!cloudEdit && !localEdit) verdict='<span class="muted">Neither copy has an edit timestamp yet (older data) — can\'t tell which is newer. If in doubt, Pull is the safe choice.</span>';
+    else if(cloudEdit>localEdit) verdict='<strong style="color:var(--warn)">The cloud copy looks newer</strong> — Pull is probably the right call.';
+    else if(localEdit>cloudEdit) verdict='<strong style="color:var(--success)">This window looks newer</strong> — Push is probably the right call.';
+    else verdict='Both copies show the same edit time.';
+    if(el) el.innerHTML='<div style="margin:2px 0">Cloud copy last edited: <strong>'+fmtWhen(cloudEdit)+'</strong></div>'+
+      '<div style="margin:2px 0">This window last edited: <strong>'+fmtWhen(localEdit)+'</strong></div>'+
+      '<div style="margin-top:8px">'+verdict+'</div>';
+    openModal('conflictModalBg');
+  });
+}
+function conflictChoose(choice){ closeModal('conflictModalBg'); const r=conflictResolver; conflictResolver=null; if(r) r(choice); }
+
+async function gistPull(manual){
+  if(!isConnected()){ if(manual) syncMsg('No journal connected.',true); return; }
+  syncing=true; setSyncDot('busy'); if(manual) syncMsg('Pulling…');
+  try{
+    const j=await (await ghFetch('/gists/'+getTeam().gistId)).json();
+    const content=await readGistFile(j, myFile());
+    if(content==null) throw new Error('No file '+myFile()+' in the team gist — wrong Journal ID, or not created yet.');
+    const incoming=JSON.parse(content); incoming.sync=db.sync; db=mergeDefaults(incoming);
+    db.sync.myHash=hashStr(content); db.sync.lastSync=Date.now();
+    db.journal.techReviewMigrated=false; runMigrations();
+    document.body.classList.toggle('dark',!!db.darkMode);
+    if(!currentProject()) db.journal.currentProjectId=(db.journal.projects[0]||{}).id;
+    if(!db.timecard.currentDate) db.timecard.currentDate=todayStr();
+    save(); renderJournal(); renderTimecard(); if(typeof renderWin==='function') renderWin();
+    setSyncDot('on'); renderSync(); if(manual) syncMsg('Pulled latest from cloud.');
+  }catch(e){ setSyncDot('err'); syncMsg(e.message,true); }
+  finally{ syncing=false; }
+}
+
+async function restoreFromId(){
+  const id=(document.getElementById('restoreId').value||'').trim();
+  if(!id){ syncMsg('Paste a Journal ID first.',true); return; }
+  db.sync.journalId=id; db.sync.myHash=null; db.sync.auto=true;
+  document.getElementById('restoreId').value=''; save(); renderSync(); await gistPull(true);
+}
+
+function leaveJournal(){
+  if(!confirm('Leave this journal on THIS device? Local data stays and the team gist is untouched. Rejoin anytime with your Journal ID.')) return;
+  db.sync={ journalId:null, journalName:'', auto:false, lastSync:null, myHash:null };
+  save(); renderSync(); setSyncDot('off'); syncMsg('Left the journal on this device.');
+}
+
+function toggleCloudAuto(){ db.sync.auto=document.getElementById('autoSyncChk').checked; save(); syncMsg(db.sync.auto?'Auto-sync on.':'Auto-sync off.'); }
+
+function copyJournalKey(){ if(!isConnected()){ syncMsg('Create or join a journal first.',true); return; }
+  navigator.clipboard.writeText(db.sync.journalId).then(()=>syncMsg('Journal ID copied — save it to restore elsewhere.'),()=>syncMsg('Copy failed — select it manually.',true)); }
+
+function renderSync(){
+  const head=document.getElementById('syncStatusHead'); if(!head) return;
+  const det=document.getElementById('syncStatusDetail'), btns=document.getElementById('syncConnectedBtns');
+  const keyTxt=document.getElementById('journalKeyText'), chk=document.getElementById('autoSyncChk');
+  const setup=document.getElementById('syncSetupBlocks');
+  const teamBlock=document.getElementById('teamSetupBlock'), teamMgmt=document.getElementById('teamManageBlock');
+  const teamCodeTxt=document.getElementById('teamCodeText');
+  if(!isConfigured()){
+    head.textContent='Enter your Team code to connect';
+    det.textContent='Your admin gives you a one-time Team code. Paste it below to connect this device to the team.';
+    btns.classList.add('hidden'); if(setup) setup.classList.add('hidden');
+    if(teamBlock) teamBlock.classList.remove('hidden'); if(teamMgmt) teamMgmt.classList.add('hidden');
+    keyTxt.textContent='— connect first —'; return;
+  }
+  if(teamBlock) teamBlock.classList.add('hidden');
+  if(teamMgmt){ teamMgmt.classList.remove('hidden'); const t=getTeam(); if(teamCodeTxt) teamCodeTxt.textContent=encTeam(t.gistId,t.token); }
+  if(setup) setup.classList.remove('hidden');
+  if(isConnected()){
+    head.textContent='Connected · '+escapeHtml(db.sync.journalName||'this journal');
+    btns.classList.remove('hidden');
+    det.innerHTML='File <code>'+escapeHtml(myFile())+'</code> in the team gist · last sync: '+(db.sync.lastSync? new Date(db.sync.lastSync).toLocaleString():'never');
+    keyTxt.textContent=db.sync.journalId; if(chk) chk.checked=!!db.sync.auto;
+  }else{
+    head.textContent='Team connected — no journal yet';
+    btns.classList.add('hidden');
+    det.textContent='Create a new journal, or join an existing one with its Journal ID.';
+    keyTxt.textContent='— create or join below —';
+  }
+}
+
+async function connectTeam(){
+  const raw=document.getElementById('teamCodeInput').value;
+  let cfg; try{ cfg=decTeam(raw); }catch(e){ syncMsg('That does not look like a valid Team code.',true); return; }
+  setSyncDot('busy'); syncMsg('Checking Team code…');
+  setTeam(cfg.gistId, cfg.token);   // temporarily set so ghFetch uses it
+  try{
+    await ghFetch('/gists/'+cfg.gistId);   // validates both gist ID and token
+    document.getElementById('teamCodeInput').value='';
+    renderSync(); setSyncDot('off'); syncMsg('Team code accepted — now create or join your journal below.');
+  }catch(e){ clearTeam(); renderSync(); setSyncDot('err'); syncMsg(e.message,true); }
+}
+async function adminConnect(){
+  const g=document.getElementById('adminGistId').value.trim(), t=document.getElementById('adminToken').value.trim();
+  if(!g||!t){ syncMsg('Enter both the gist ID and the token.',true); return; }
+  setSyncDot('busy'); syncMsg('Checking gist + token…'); setTeam(g,t);
+  try{
+    await ghFetch('/gists/'+g);
+    document.getElementById('adminGistId').value=''; document.getElementById('adminToken').value='';
+    renderSync(); setSyncDot('off'); syncMsg('Connected. Your Team code is shown below — copy it to onboard coworkers.');
+  }catch(e){ clearTeam(); renderSync(); setSyncDot('err'); syncMsg(e.message,true); }
+}
+function copyTeamCode(){ const t=getTeam(); if(!t.gistId) return;
+  navigator.clipboard.writeText(encTeam(t.gistId,t.token)).then(()=>syncMsg('Team code copied — share it with a coworker to onboard them.'),()=>syncMsg('Copy failed — select it manually.',true)); }
+function changeTeamCode(){
+  if(!confirm('Disconnect this device from the team? Your local journal stays. You can paste a Team code again to reconnect (use this after a token rotation).')) return;
+  clearTeam(); db.sync={ journalId:null, journalName:'', auto:false, lastSync:null, myHash:null };
+  save(); renderSync(); setSyncDot('off'); syncMsg('Disconnected. Paste a Team code to reconnect.');
+}
+function openSettings(){ renderSync(); syncMsg(''); openModal('settingsModalBg'); }
+function syncBoot(){ if(isConnected()){ setSyncDot('on'); if(db.sync.auto) gistPull(false); } else setSyncDot('off'); }
+function scheduleAutoPush(){ if(syncing||!isConnected()||!db.sync.auto) return; clearTimeout(pushTimer); pushTimer=setTimeout(()=>gistPush(false), 4000); }
+document.addEventListener('click',()=>closeGearMenu());
+function cancelPendingConflict(){ if(conflictResolver){ const r=conflictResolver; conflictResolver=null; r('cancel'); } }
+document.querySelectorAll('.modal-bg').forEach(bg=>bg.addEventListener('mousedown',e=>{ if(e.target===bg){ bg.classList.remove('open'); updateModalLock(); if(bg.id==='conflictModalBg') cancelPendingConflict(); } }));
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeGearMenu(); document.querySelectorAll('.modal-bg.open').forEach(m=>m.classList.remove('open')); updateModalLock(); cancelPendingConflict(); }
+  const ed=document.getElementById('bigEditor'); if(document.getElementById('editorModalBg').classList.contains('open')&&document.activeElement===ed){
+    if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='b'){ e.preventDefault(); mdWrap('**'); }
+    if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='i'){ e.preventDefault(); mdWrap('*'); } } });
+
+/* =====================================================================
+   EXAMPLE SEED — a neutral, fictional demo so a first-time user sees how
+   the journal works. Everything here is made up (ACME). Users delete it
+   to start their own. Runs only when there's no local data.
+   ===================================================================== */
+function seedDemo(){
+  const p=createAuditProject('★ ACME Co — Example (delete me)'); p.clientCode='ACME';
+  p.notes='This is a sample project showing how the journal works — section **statuses**, **budget vs. actual**, **preparer/reviewer notes**, and **open items**.\n\nWhen you\'re ready: click **Delete Project** to remove this, then **New Project** to start your own. Nothing here is real.';
+  const set=(name,fields)=>{ const s=p.sections.find(x=>x.name===name); if(s) Object.assign(s,fields); };
+  set('1 - Permanent File', {budget:1, actual:1, status:'Complete',        preparer:'Org docs & PBC list filed.'});
+  set('A - Cash',           {budget:4, actual:3, status:'Complete',        preparer:'Tied to bank recs & confirmations.', reviewer:'Reviewed — no exceptions.'});
+  set('B - Receivables',    {budget:6, actual:2, status:'In Prep',         preparer:'AR aging received from client.', scratch:'- [ ] Confirm top 5 customer balances\n- [ ] Test subsequent cash receipts'});
+  set('M - Payables',       {budget:5, actual:5, status:'Review Comments', reviewer:'Cutoff note: verify late-Dec invoices posted to the right period.'});
+  db.journal.projects=[p]; db.journal.currentProjectId=p.id;
+
+  // Example time-card day (today). Codes a & b link to sections to show time-sync.
+  const codes=[
+    {letter:'a',client:'ACME',billing:'A',type:'billable',linkProjectId:p.id,linkSection:'A - Cash'},
+    {letter:'b',client:'ACME',billing:'B',type:'billable',linkProjectId:p.id,linkSection:'B - Receivables'},
+    ...standardCodes()
+  ];
+  const E=(code,stop,desc='')=>({id:uid(),code,stop,desc});
+  const entries=[E('x','08:30','Example: admin & email'),E('a','10:00','Example: cash workpapers'),
+    E('v','10:45'),E('b','12:00','Example: AR aging review'),E('x','12:20','Example: team check-in')];
+  const d=todayStr();
+  db.timecard.days[d]={dayStart:'08:00',codes,entries,win:[]};
+  db.timecard.currentDate=d;
+}
+
+load();
+</script>
+</body>
+</html>
