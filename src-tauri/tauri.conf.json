@@ -15,10 +15,10 @@
         "height": 860,
         "minWidth": 900,
         "minHeight": 600,
-        "resizable": true,
-        "withGlobalTauri": true
+        "resizable": true
       }
     ],
+    "withGlobalTauri": true,
     "security": {
       "csp": null
     }
