@@ -143,13 +143,10 @@ th.sortable:hover{color:var(--accent);}
 .num{text-align:right;font-variant-numeric:tabular-nums;}
 .dur-cell{font-variant-numeric:tabular-nums;font-weight:600;}
 .start-cell{color:var(--muted);font-variant-numeric:tabular-nums;}
-.drag-cell{width:26px;padding-left:6px;padding-right:0;vertical-align:middle;}
-.drag-handle{cursor:grab;color:var(--muted);user-select:none;font-size:16px;line-height:1;display:inline-block;padding:4px 3px;border-radius:6px;}
-.drag-handle:hover{background:rgba(37,99,235,.12);color:var(--text);}
-.drag-handle:active{cursor:grabbing;}
-tr.dragging{opacity:.4;}
-tr.drop-above>td{box-shadow:inset 0 2px 0 0 var(--accent);}
-tr.drop-below>td{box-shadow:inset 0 -2px 0 0 var(--accent);}
+.move-cell{width:34px;padding:6px 4px;vertical-align:middle;white-space:nowrap;}
+.move-btn{display:block;width:24px;height:17px;line-height:1;padding:0;margin:2px auto;font-size:10px;border:1px solid var(--border);background:var(--panel);color:var(--muted);border-radius:5px;cursor:pointer;}
+.move-btn:hover:not(:disabled){background:rgba(37,99,235,.12);color:var(--text);border-color:var(--accent);}
+.move-btn:disabled{opacity:.25;cursor:default;}
 .addbar{display:flex;gap:8px;padding:10px;}
 .hint{font-size:12px;color:var(--muted);padding:0 16px 12px;line-height:1.5;}
 .linkcell{min-width:230px;}
@@ -314,20 +311,19 @@ body.modal-open{overflow:hidden;}
 
   <!-- DAY -->
   <div class="tab-pane active" id="tc-day">
-    <div class="toolbar" style="justify-content:flex-end;margin-bottom:10px;">
+    <div class="toolbar">
+      <div class="datectrl">
+        <button class="ghost small" onclick="shiftDay(-1)">◀</button>
+        <input type="date" id="datePicker" onchange="onDateChange()" />
+        <button class="ghost small" onclick="shiftDay(1)">▶</button>
+        <button class="ghost small" onclick="goToday()">Today</button>
+        <span class="dow" id="dowLabel"></span>
+      </div>
+      <span class="spacer"></span>
       <button class="ghost small" onclick="carryForward()">Carry codes forward</button>
-      <button class="ghost small" id="autoSyncBtn" onclick="toggleAutoSync()">Auto-sync: Off</button>
-      <button class="small" onclick="syncDayToJournal()">↪ Sync to Journal</button>
       <button class="ghost small" onclick="copySummary()">Copy / Read for CCH</button>
     </div>
-    <div class="datectrl" style="justify-content:flex-end;flex-wrap:wrap;margin-bottom:6px;">
-      <button class="ghost small" onclick="shiftDay(-1)">◀</button>
-      <input type="date" id="datePicker" onchange="onDateChange()" />
-      <button class="ghost small" onclick="shiftDay(1)">▶</button>
-      <button class="ghost small" onclick="goToday()">Today</button>
-      <span class="dow" id="dowLabel"></span>
-    </div>
-    <div id="loggedDays" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;margin:0 0 14px;"></div>
+    <div id="loggedDays" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;margin:-6px 0 14px;"></div>
 
     <div class="tcards">
       <div class="tcard bill"><div class="lbl">Billable</div><div class="val" id="cBill">0.00</div></div>
@@ -346,11 +342,11 @@ body.modal-open{overflow:hidden;}
       </h3>
       <div class="body">
         <table>
-          <thead><tr><th class="drag-cell"></th><th>Code</th><th>Start</th><th>Stop</th><th class="num">Dur</th><th>Description</th><th></th></tr></thead>
+          <thead><tr><th class="move-cell"></th><th>Code</th><th>Start</th><th>Stop</th><th class="num">Dur</th><th>Description</th><th></th></tr></thead>
           <tbody id="logBody"></tbody>
         </table>
       </div>
-      <div class="hint">Set only the <b>code</b> and <b>stop</b> time — start auto-fills from the previous block. Drag the <b>⠿</b> handle to reorder blocks; times recompute to match the new order.</div>
+      <div class="hint">Set only the <b>code</b> and <b>stop</b> time — start auto-fills from the previous block. Use the <b>▲ ▼</b> buttons to reorder blocks; times recompute to match the new order.</div>
     </div>
 
     <div class="panel">
@@ -1567,8 +1563,6 @@ function renderTimecard(){
   document.getElementById('datePicker').value=db.timecard.currentDate;
   document.getElementById('dowLabel').textContent=dowName(db.timecard.currentDate);
   document.getElementById('dayStart').value=fmt12(day.dayStart);
-  document.getElementById('autoSyncBtn').textContent='Auto-sync: '+(db.timecard.autoSync?'On':'Off');
-  document.getElementById('autoSyncBtn').classList.toggle('small', true);
   renderLoggedDays(); renderLog(); renderCodesTable(); renderTotals(); renderWinMini();
   scheduleAutoSync();
 }
@@ -1607,32 +1601,19 @@ function advanceFromStop(i){ const day=curDay();
   if(i>=day.entries.length-1){ const last=day.entries[day.entries.length-1];
     day.entries.push({id:uid(),code:(day.codes[0]||{letter:'x'}).letter,stop:last?last.stop:day.dayStart,desc:''}); }
   renderTimecard(); save(); focusLogCell(i+1,'select'); }
-/* ---- time-log drag reorder ---- */
-let logDragFrom=null;
-function clearLogDropMarks(){ document.querySelectorAll('#logBody tr').forEach(r=>r.classList.remove('drop-above','drop-below','dragging')); }
-function moveLogEntry(day,from,insertBefore){
-  if(from==null) return;
-  const arr=day.entries.slice(); const [item]=arr.splice(from,1);
-  let idx=(from<insertBefore)?insertBefore-1:insertBefore;
-  if(idx<0)idx=0; if(idx>arr.length)idx=arr.length;
-  arr.splice(idx,0,item); day.entries=arr;
-}
+/* ---- time-log reorder (up/down) ---- */
+function moveEntryStep(i,dir){ const day=curDay(); if(!day) return; const j=i+dir;
+  if(j<0||j>=day.entries.length) return;
+  const e=day.entries; const t=e[i]; e[i]=e[j]; e[j]=t;
+  renderTimecard(); save(); }
 function logRow(day,en,i){
   const tr=document.createElement('tr');
-  const tdDrag=document.createElement('td'); tdDrag.className='drag-cell';
-  const handle=document.createElement('span'); handle.className='drag-handle'; handle.textContent='\u283F'; handle.title='Drag to reorder'; handle.setAttribute('draggable','true');
-  handle.addEventListener('dragstart',e=>{ logDragFrom=i; e.dataTransfer.effectAllowed='move'; try{e.dataTransfer.setData('text/plain',String(i));}catch(_){}
-    tr.classList.add('dragging'); try{e.dataTransfer.setDragImage(tr,24,14);}catch(_){} });
-  handle.addEventListener('dragend',()=>{ logDragFrom=null; clearLogDropMarks(); });
-  tdDrag.appendChild(handle);
-  tr.addEventListener('dragover',e=>{ if(logDragFrom==null) return; e.preventDefault(); e.dataTransfer.dropEffect='move';
-    const rect=tr.getBoundingClientRect(); const below=(e.clientY-rect.top)>rect.height/2;
-    document.querySelectorAll('#logBody tr').forEach(r=>{ if(r!==tr) r.classList.remove('drop-above','drop-below'); });
-    tr.classList.toggle('drop-below',below); tr.classList.toggle('drop-above',!below); });
-  tr.addEventListener('drop',e=>{ if(logDragFrom==null) return; e.preventDefault();
-    const rect=tr.getBoundingClientRect(); const below=(e.clientY-rect.top)>rect.height/2;
-    const insertBefore=below?i+1:i; const from=logDragFrom; logDragFrom=null; clearLogDropMarks();
-    if(from!==insertBefore && from!==insertBefore-1){ moveLogEntry(day,from,insertBefore); renderTimecard(); save(); } });
+  const tdMove=document.createElement('td'); tdMove.className='move-cell';
+  const up=document.createElement('button'); up.type='button'; up.className='move-btn'; up.textContent='▲'; up.title='Move up'; up.disabled=(i===0);
+  up.addEventListener('click',()=>moveEntryStep(i,-1));
+  const down=document.createElement('button'); down.type='button'; down.className='move-btn'; down.textContent='▼'; down.title='Move down'; down.disabled=(i===day.entries.length-1);
+  down.addEventListener('click',()=>moveEntryStep(i,1));
+  tdMove.append(up,down);
   const tdCode=document.createElement('td'); const sel=document.createElement('select');
   day.codes.forEach(c=>{ const o=document.createElement('option'); o.value=c.letter; o.textContent=c.letter+' — '+codeLabel(c); if(c.letter===en.code)o.selected=true; sel.appendChild(o); });
   // code change refreshes totals/codes only (NOT the log) so keyboard focus survives for fast Tab entry
@@ -1659,7 +1640,7 @@ function logRow(day,en,i){
   desc.onchange=()=>{ en.desc=desc.value; save(); }; tdDesc.appendChild(desc);
   const tdDel=document.createElement('td'); const del=document.createElement('button'); del.className='ghost small'; del.textContent='✕';
   del.onclick=()=>{ day.entries.splice(i,1); renderTimecard(); save(); }; tdDel.appendChild(del);
-  tr.append(tdDrag,tdCode,tdStart,tdStop,tdDur,tdDesc,tdDel); return tr;
+  tr.append(tdMove,tdCode,tdStart,tdStop,tdDur,tdDesc,tdDel); return tr;
 }
 function codeRow(day,c,mins){
   const tr=document.createElement('tr');
@@ -1737,19 +1718,10 @@ function applySyncForDay(date){
     if(!s.timeSync) s.timeSync={}; s.timeSync[date]=Number(t.hours.toFixed(2)); p.modifiedDate=now(); count++; total+=t.hours; });
   return {count,total};
 }
-function syncDayToJournal(){
-  const r=applySyncForDay(db.timecard.currentDate);
-  save(); renderJournal(); renderTimecard();
-  flash(r.count?('Synced '+r.total.toFixed(2)+' h to '+r.count+' section(s)'):'Nothing linked to sync today');
-}
 let autoSyncTimer=null;
-function scheduleAutoSync(){ if(!db.timecard||!db.timecard.autoSync) return; clearTimeout(autoSyncTimer);
-  autoSyncTimer=setTimeout(()=>{ const r=applySyncForDay(db.timecard.currentDate); save(); renderJournal();
-    if(r.count) flash('Auto-synced '+r.total.toFixed(2)+' h'); }, 600); }
-function toggleAutoSync(){ db.timecard.autoSync=!db.timecard.autoSync;
-  document.getElementById('autoSyncBtn').textContent='Auto-sync: '+(db.timecard.autoSync?'On':'Off');
-  if(db.timecard.autoSync){ const r=applySyncForDay(db.timecard.currentDate); renderJournal(); renderTimecard(); flash(r.count?('Synced '+r.total.toFixed(2)+' h'):'Auto-sync on'); }
-  save(); }
+/* Timecard hours always roll up into linked journal sections — no toggle. */
+function scheduleAutoSync(){ if(!db.timecard) return; clearTimeout(autoSyncTimer);
+  autoSyncTimer=setTimeout(()=>{ const r=applySyncForDay(db.timecard.currentDate); save(); renderJournal(); }, 600); }
 
 /* ---- month report ---- */
 // Column sort. Default: Hours, high→low (matches the old behavior).
