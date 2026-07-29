@@ -106,6 +106,18 @@ table.role-reviewer .col-prep{display:none}
 .group-row.collapsed .chev{transform:rotate(-90deg);}
 .group-count{color:var(--muted);font-weight:500;margin-left:8px;}
 .note-box{min-height:64px;resize:vertical;font-size:13px;}
+/* rich notes: note surfaces are contenteditable so formatting shows as
+   formatting. They still LOOK like the old boxes — same border, ink, and
+   scroll — they just render **bold** as bold instead of printing asterisks. */
+.note-box[contenteditable]{white-space:pre-wrap;overflow:auto;cursor:text;
+  border:1px solid var(--border);background:var(--panel);color:var(--text);
+  border-radius:9px;padding:8px;width:100%;box-sizing:border-box;font-family:inherit;
+  font-size:13px;line-height:1.45;min-height:64px;resize:vertical;}
+.note-box[contenteditable]:focus{outline:2px solid var(--accent);outline-offset:-2px;}
+.note-box[contenteditable]:empty:before{content:attr(data-ph);color:var(--muted);}
+.note-box[contenteditable] b{font-weight:800;}
+.md-tools{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+.md-tools .swatch{width:13px;height:13px;border-radius:50%;display:inline-block;vertical-align:-2px;}
 .cell-actions{display:flex;gap:6px;margin-top:6px;}
 .var-pos{color:var(--success);font-weight:600} .var-neg{color:var(--danger);font-weight:600}
 .synced-note{font-size:11px;color:var(--accent);margin-top:4px;font-weight:600;}
@@ -171,25 +183,78 @@ body.modal-open{overflow:hidden;}
 .modal-meta{font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.7;}
 .modal-actions{display:flex;gap:10px;margin-top:14px;justify-content:flex-end;}
 .editor-toolbar{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
-#bigEditor{width:100%;height:48vh;font-size:15px;line-height:1.5;}
+#bigEditor{width:100%;height:48vh;font-size:15px;line-height:1.5;box-sizing:border-box;
+  white-space:pre-wrap;overflow:auto;cursor:text;border:1px solid var(--border);
+  background:var(--panel);color:var(--text);border-radius:9px;padding:10px;font-family:inherit;}
+#bigEditor:focus{outline:2px solid var(--accent);outline-offset:-2px;}
+#bigEditor b{font-weight:800;}
 .modal pre{background:var(--group);padding:14px;border-radius:10px;white-space:pre-wrap;font-size:13px;max-height:50vh;overflow:auto;}
 .modal.cch{width:88vw;max-width:88vw;height:85vh;display:flex;flex-direction:column;resize:both;overflow:hidden;min-width:380px;min-height:300px;}
 .modal.cch pre{flex:1;white-space:pre;max-height:none;font-size:14px;line-height:1.5;}
 .modal.cch pre b{font-weight:800;}
 .hidden{display:none}
 @media(max-width:880px){.stats,.tcards{grid-template-columns:repeat(2,1fr)}.app{flex-direction:column}.sidebar{width:100%;height:auto;position:static}}
+/* =====================================================================
+   POCKET TOOLS — scratch sheet (▦) + the tinker's bell (🔔).
+   Both are EPHEMERAL: neither touches db or save(), so nothing here
+   enters the team-synced data shape.
+   ===================================================================== */
+.pocket-btn{font-size:15px;line-height:1;padding:7px 10px;opacity:.6;}
+.pocket-btn:hover{opacity:1;}
+.scratch-over{position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;z-index:70;padding:26px 18px;overscroll-behavior:contain;}
+.scratch-over.open{display:flex;align-items:flex-start;justify-content:center;}
+.scratch-panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;max-width:100%;max-height:calc(100vh - 60px);display:flex;flex-direction:column;box-shadow:0 18px 60px rgba(0,0,0,.35);}
+.scratch-head{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.scratch-head h3{margin:0;font-size:16px;}
+.scratch-head .muted{font-size:12px;}
+.scratch-bar{display:flex;gap:8px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--border);}
+.scratch-bar .sc-cur{min-width:32px;text-align:center;color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums;}
+.scratch-bar input{flex:1;font-size:13px;font-variant-numeric:tabular-nums;padding:6px 8px;}
+.scratch-wrap{overflow:auto;padding:8px 12px 12px;}
+table.scratch{border-collapse:separate;border-spacing:0;}
+table.scratch th{background:var(--panel);color:var(--muted);font-weight:400;font-size:11px;padding:2px 7px;position:sticky;z-index:2;}
+table.scratch thead th{top:0;}
+table.scratch tbody th{left:0;text-align:right;}
+table.scratch td{border:1px solid var(--border);padding:0;}
+/* honest truncation: a silently clipped 4,959,665.82 reads as a complete
+   4,959,665.8 — a plausible wrong number. Ellipsis makes it unmistakable. */
+table.scratch td input{width:104px;border:none;border-radius:0;background:transparent;padding:6px 8px;font-size:13px;font-variant-numeric:tabular-nums;display:block;text-overflow:ellipsis;}
+table.scratch td input:focus{outline:2px solid var(--accent);outline-offset:-2px;background:rgba(37,99,235,.06);}
+table.scratch td.sc-src{box-shadow:inset 0 0 0 2px var(--accent);background:rgba(37,99,235,.09);}
+input.sc-num{text-align:right;}
+input.sc-err{color:var(--danger);text-align:right;}
+/* ---- the tinker's bell ---- */
+.bell-head{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;margin:0;}
+.bell-carrot{display:inline-block;transition:transform .18s;}
+.bell-panel.open .bell-carrot{transform:rotate(90deg);}
+.bell-mini{margin-left:auto;font-variant-numeric:tabular-nums;font-weight:400;}
+.bell-body{display:none;}
+.bell-panel.open .bell-body{display:flex;gap:24px;flex-wrap:wrap;align-items:center;padding-top:14px;}
+.bell-vis{width:170px;height:170px;flex:none;display:flex;align-items:center;justify-content:center;}
+.bell-vis svg{max-width:100%;max-height:100%;width:100%;height:100%;display:block;}
+.bell-side{display:flex;flex-direction:column;gap:9px;min-width:230px;flex:1;}
+.bell-time{font-size:40px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1;}
+.bell-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+/* the rung state: a slow breathing pulse + soft glow — eye-catching only
+   when your eyes come looking. Never flashes, never rings twice. */
+@keyframes bellPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+.bell-vis.rung{animation:bellPulse 2.6s ease-in-out infinite;filter:drop-shadow(0 0 18px rgba(37,99,235,.45));}
+@media (prefers-reduced-motion: reduce){ .bell-vis.rung{animation:none;filter:drop-shadow(0 0 18px rgba(37,99,235,.6));} }
+.bell-btn{border:none;background:transparent;cursor:pointer;font-size:13px;padding:2px 4px;opacity:.55;line-height:1;}
+.bell-btn:hover{opacity:1;background:transparent;}
 </style>
 </head>
 <body>
 
 <div class="appbar">
-  <div class="brand"><img class="brand-icon" alt="PJT" src="data:image/png;base64,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" /><span>Project Journal &amp; Timecard<small>Project journal + timecard, team-synced · v3.3.0</small></span></div>
+  <div class="brand"><img class="brand-icon" alt="PJT" src="data:image/png;base64,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" /><span>Project Journal &amp; Timecard<small>Project journal + timecard, team-synced · v3.5.0</small></span></div>
   <div class="maintabs">
     <div class="maintab active" data-m="journal" onclick="switchMain('journal')">Project Journal</div>
     <div class="maintab" data-m="timecard" onclick="switchMain('timecard')">Time Card</div>
     <div class="maintab" data-m="win" onclick="switchMain('win')">Daily W.I.N.</div>
   </div>
   <div class="spacer"></div>
+  <button class="ghost small pocket-btn" onclick="scratchToggle()" title="Scratch sheet — an 8×25 pocket grid with basic math (Esc puts it back)">▦</button>
   <div class="save-pill"><span class="save-dot" id="saveDot"></span><span id="saveStatus">Saved</span></div>
   <div class="sync-pill" id="syncPill" onclick="openSettings()" title="Storage & cloud sync settings"><span class="sync-dot" id="syncDot"></span><span id="syncStatus">Local only</span></div>
   <div class="gear-wrap">
@@ -264,9 +329,9 @@ body.modal-open{overflow:hidden;}
     <div style="margin-bottom:16px">
       <button class="ghost small" id="notesToggle" onclick="toggleProjectNotes()">📝 Project Notes ▸</button>
       <div id="projectNotesPanel" class="hidden" style="margin-top:10px">
-        <textarea id="projectNotes" class="note-box" style="min-height:96px;width:100%"
-          placeholder="Client contact info, phone numbers, general notes not tied to any section…"
-          onchange="updateProjectNotes(this.value)"></textarea>
+        <div id="projectNotes" class="note-box" contenteditable="true" spellcheck="true"
+          style="min-height:96px;width:100%"
+          data-ph="Client contact info, phone numbers, general notes not tied to any section…"></div>
         <div class="cell-actions" style="margin-top:6px">
           <button class="ghost small" onclick="openProjectNotesEditor()">Expand ↗</button>
           <button class="ghost small" onclick="copyText(currentProject().notes||'')">Copy</button>
@@ -324,6 +389,30 @@ body.modal-open{overflow:hidden;}
       <button class="ghost small" onclick="copySummary()">Copy / Read for CCH</button>
     </div>
     <div id="loggedDays" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;margin:-6px 0 14px;"></div>
+
+    <!-- The tinker's bell. Static markup on purpose — renderTimecard() never
+         touches it, so a running timer survives re-renders and tab switches.
+         Entirely ephemeral: no db field, no save(), nothing to sync. -->
+    <div class="card bell-panel" id="bellPanel" style="margin-bottom:18px">
+      <h3 class="bell-head" onclick="bellToggle()">
+        <span><span class="bell-carrot" id="bellCarrot">▸</span> 🔔 Focus timer</span>
+        <span class="bell-mini muted" id="bellMini"></span>
+      </h3>
+      <div class="bell-body">
+        <div class="bell-vis" id="bellVis" aria-hidden="true"></div>
+        <div class="bell-side">
+          <div class="bell-time" id="bellTime">25:00</div>
+          <div class="muted" id="bellFor">Set a duration, or ring one in from a time block's 🔔.</div>
+          <div class="bell-controls">
+            <label class="muted">Minutes <input type="text" inputmode="numeric" id="bellDur" value="25" style="width:64px;display:inline-block;padding:4px 6px"></label>
+            <button class="small" id="bellStartBtn">Start</button>
+            <button class="ghost small" id="bellResetBtn">Reset</button>
+            <button class="ghost small" id="bellMuteBtn" title="One soft ring when time is up — never more">Sound: off</button>
+          </div>
+          <div class="muted" id="bellWord" style="font-style:italic"></div>
+        </div>
+      </div>
+    </div>
 
     <div class="tcards">
       <div class="tcard bill"><div class="lbl">Billable</div><div class="val" id="cBill">0.00</div></div>
@@ -447,16 +536,18 @@ body.modal-open{overflow:hidden;}
 <div class="modal-bg" id="editorModalBg"><div class="modal wide">
   <h2 id="editorTitle">Notes</h2>
   <div class="modal-meta" id="editorMeta"></div>
-  <div class="editor-toolbar">
-    <button class="ghost" onclick="mdWrap('**')"><b>B</b></button>
-    <button class="ghost" onclick="mdWrap('*')"><i>I</i></button>
+  <div class="editor-toolbar md-tools">
+    <button class="ghost" onclick="mdBold()" title="Bold (Ctrl+B)"><b>B</b></button>
+    <button class="ghost" onclick="mdItalic()" title="Italic (Ctrl+I)"><i>I</i></button>
+    <button class="ghost" onclick="mdStrike()" title="Strikethrough"><s>S</s></button>
+    <button class="ghost" onclick="mdRed()" title="Red"><span class="swatch" style="background:#c00"></span></button>
+    <button class="ghost" onclick="mdBlack()" title="Default colour"><span class="swatch" style="background:currentColor"></span></button>
     <button class="ghost" onclick="mdBullets()">• List</button>
     <button class="ghost" onclick="copyEditor()">Copy</button>
   </div>
-  <textarea id="bigEditor"></textarea>
+  <div id="bigEditor" class="note-box" contenteditable="true" spellcheck="true"></div>
   <div class="modal-actions">
-    <button class="ghost" onclick="closeModal('editorModalBg')">Cancel</button>
-    <button onclick="saveExpanded()">Save &amp; Close</button>
+    <button onclick="saveExpanded()">Close</button>
   </div>
 </div></div>
 
@@ -757,9 +848,28 @@ body.modal-open{overflow:hidden;}
 
 <input type="file" id="importFile" class="hidden" accept=".json" />
 
+<!-- POCKET TOOL: tabs are rooms, pockets are tools. The scratch sheet
+     overlays whatever room you're in and the room never moves. -->
+<div class="scratch-over" id="scratchOver" onclick="if(event.target===this) scratchToggle(false)">
+  <div class="scratch-panel">
+    <div class="scratch-head">
+      <h3>▦ Scratch sheet</h3>
+      <span class="muted">=A1*B2 &nbsp;·&nbsp; SUM · AVG · MIN · MAX (A1:A9) — numbers you don't have to hold in your head</span>
+      <span style="flex:1"></span>
+      <span class="muted" title="This sheet is a napkin: it is never saved to your journal and never syncs to the team.">napkin — not saved, not synced</span>
+      <button class="ghost small" onclick="scratchClear(this)">Clear sheet</button>
+      <button class="ghost small" onclick="scratchToggle(false)" title="Back in the pocket (Esc)">✕</button>
+    </div>
+    <!-- composition bar: a wide mirror of the cell being edited, for
+         formulas longer than a cell. Pointing at cells works from here too. -->
+    <div class="scratch-bar"><span class="sc-cur" id="scBarRef">A1</span><input id="scBarInput" autocomplete="off" spellcheck="false" placeholder="Compose here — =SUM(A1:A9); mid-formula, click cells to add their refs"></div>
+    <div class="scratch-wrap" id="scratchWrap"></div>
+  </div>
+</div>
+
 <script>
 /* =====================================================================
-   Project Journal & Timecard (PJT) v3.3.0 — Project Journal + Time Card, one file.
+   Project Journal & Timecard (PJT) v3.5.0 — Project Journal + Time Card, one file.
    Single shared db, single localStorage key 'projtime_v8', JSON backups.
    Desktop (Tauri) build adds a durable on-disk copy + rolling daily backups,
    and optional passphrase encryption at rest (AES-GCM via Web Crypto). Both
@@ -1280,7 +1390,8 @@ function renderJournal(){
   document.getElementById('clientCodeHint').textContent=(p.clientCode||'').trim()
     ? 'In time-card library — syncable as “'+p.clientCode.trim()+'”'
     : 'Blank = notes-only. Hidden from the time card, never syncs.';
-  document.getElementById('projectNotes').value=p.notes||'';
+  const pn=document.getElementById('projectNotes');
+  if(pn && document.activeElement!==pn) mdSet(pn, p.notes||'');
   document.getElementById('roleSelect').value=p.role||'both';
   document.getElementById('archiveChk').checked=!!p.archived;
   document.getElementById('journalTable').className='role-'+(p.role||'both');
@@ -1293,11 +1404,16 @@ function renderJournal(){
 function updateRole(v){ currentProject().role=v; currentProject().modifiedDate=now(); renderJournal(); save(); }
 function updateArchived(c){ currentProject().archived=!!c; currentProject().modifiedDate=now(); renderJournal(); renderTimecard(); save(); }
 function toggleProjectNotes(){ db.journal.notesOpen=!db.journal.notesOpen; renderJournal(); save(); }
-function updateProjectNotes(v){ currentProject().notes=v; currentProject().modifiedDate=now(); renderRecent(); save(); }
+function updateProjectNotes(v){ const p=currentProject(); if(!p||p.notes===v) return;
+  p.notes=v; p.modifiedDate=now(); renderRecent(); save(); }
+(function(){ const pn=document.getElementById('projectNotes'); if(!pn) return; let t=null;
+  const commit=()=>{ const p=currentProject(); if(p) updateProjectNotes(mdGet(pn)); };
+  pn.addEventListener('input',()=>{ clearTimeout(t); t=setTimeout(commit,800); });
+  pn.addEventListener('blur',()=>{ clearTimeout(t); commit(); }); })();
 function openProjectNotesEditor(){ const p=currentProject(); editorCtx={scope:'project'};
   document.getElementById('editorTitle').textContent='Project Notes — '+p.name;
   document.getElementById('editorMeta').innerHTML='Project: '+escapeHtml(p.name)+(p.clientCode?'<br>Client code: '+escapeHtml(p.clientCode):'')+'<br>Created: '+escapeHtml(p.createdDate)+'<br>Modified: '+escapeHtml(p.modifiedDate);
-  const ed=document.getElementById('bigEditor'); ed.value=p.notes||''; openModal('editorModalBg'); setTimeout(()=>ed.focus(),50); }
+  const ed=document.getElementById('bigEditor'); mdSet(ed, p.notes||''); openModal('editorModalBg'); setTimeout(()=>ed.focus(),50); }
 function renderProjectPicker(){
   const sel=document.getElementById('projectPicker'); sel.innerHTML='';
   const showArch=!!db.journal.showArchived;
@@ -1403,8 +1519,13 @@ function buildSectionRow(s){
   return tr;
 }
 function noteCell(s,field,withCopy=false){
-  const td=document.createElement('td'); const ta=document.createElement('textarea'); ta.className='note-box'; ta.value=s[field]||'';
-  ta.onchange=()=>updateField(s.id,field,ta.value);
+  const td=document.createElement('td');
+  const ta=document.createElement('div'); ta.className='note-box'; ta.setAttribute('contenteditable','true'); ta.setAttribute('spellcheck','true');
+  ta.setAttribute('data-ph',''); mdSet(ta, s[field]||'');
+  /* contenteditable fires no 'change' — autosave on input (debounced) + blur */
+  let t=null; const commit=()=>{ const v=mdGet(ta); if((s[field]||'')!==v) updateField(s.id,field,v); };
+  ta.addEventListener('input',()=>{ clearTimeout(t); t=setTimeout(commit,800); });
+  ta.addEventListener('blur',()=>{ clearTimeout(t); commit(); });
   const actions=document.createElement('div'); actions.className='cell-actions';
   const exp=document.createElement('button'); exp.className='small ghost'; exp.textContent='Expand ↗'; exp.onclick=()=>openExpanded(s.id,field); actions.appendChild(exp);
   const cp=document.createElement('button'); cp.className='small ghost'; cp.textContent='Copy'; cp.onclick=()=>copyText(s[field]||''); actions.appendChild(cp);
@@ -1494,17 +1615,91 @@ function openExpanded(id,field){ const s=currentProject().sections.find(x=>x.id=
   const L={preparer:'Preparer Notes',reviewer:'Reviewer Notes',scratch:'Open Items'}; const p=currentProject();
   document.getElementById('editorTitle').textContent=L[field]+' — '+s.name;
   document.getElementById('editorMeta').innerHTML='Project: '+escapeHtml(p.name)+'<br>Section: '+escapeHtml(s.name)+'<br>Created: '+escapeHtml(p.createdDate)+'<br>Modified: '+escapeHtml(p.modifiedDate);
-  const ed=document.getElementById('bigEditor'); ed.value=s[field]||''; openModal('editorModalBg'); setTimeout(()=>ed.focus(),50); }
-function saveExpanded(){ if(!editorCtx) return;
-  if(editorCtx.scope==='project'){ currentProject().notes=document.getElementById('bigEditor').value; currentProject().modifiedDate=now(); }
-  else { const s=currentProject().sections.find(x=>x.id===editorCtx.id);
-    if(s){ s[editorCtx.field]=document.getElementById('bigEditor').value; s.updated=now(); currentProject().modifiedDate=now(); } }
-  editorCtx=null; closeModal('editorModalBg'); renderJournal(); save(); }
-function copyEditor(){ copyText(document.getElementById('bigEditor').value); }
-function mdWrap(tok){ const ed=document.getElementById('bigEditor'); const a=ed.selectionStart,b=ed.selectionEnd; const sel=ed.value.slice(a,b)||'text';
-  ed.value=ed.value.slice(0,a)+tok+sel+tok+ed.value.slice(b); ed.focus(); ed.selectionStart=a+tok.length; ed.selectionEnd=a+tok.length+sel.length; }
-function mdBullets(){ const ed=document.getElementById('bigEditor'); const a=ed.selectionStart,b=ed.selectionEnd; const blk=ed.value.slice(a,b)||'item';
-  const out=blk.split('\n').map(l=>l.trim()?('- '+l):l).join('\n'); ed.value=ed.value.slice(0,a)+out+ed.value.slice(b); ed.focus(); }
+  const ed=document.getElementById('bigEditor'); mdSet(ed, s[field]||''); openModal('editorModalBg'); setTimeout(()=>ed.focus(),50); }
+/* Expanded editor auto-saves: commitExpanded writes the current text through
+   the normal save() seam. Closing any way — Close button, backdrop click,
+   Escape — commits first, so a stray click can never lose an edit. */
+function commitExpanded(){ if(!editorCtx) return;
+  const v=mdGet(document.getElementById('bigEditor'));
+  if(editorCtx.scope==='project'){ const p=currentProject();
+    if(p && p.notes!==v){ p.notes=v; p.modifiedDate=now(); save(); } }
+  else { const p=currentProject(); const s=p&&p.sections.find(x=>x.id===editorCtx.id);
+    if(s && s[editorCtx.field]!==v){ s[editorCtx.field]=v; s.updated=now(); p.modifiedDate=now(); save(); } } }
+function saveExpanded(){ commitExpanded(); editorCtx=null; closeModal('editorModalBg'); renderJournal(); }
+(function(){ const ed=document.getElementById('bigEditor'); if(!ed) return; let t=null;
+  ed.addEventListener('input',()=>{ clearTimeout(t); t=setTimeout(commitExpanded,800); }); })();
+function copyEditor(){ copyText(mdGet(document.getElementById('bigEditor'))); }
+/* =====================================================================
+   RICH NOTES — markdown in the db, formatting on the screen.
+   The stored value stays markdown so Export Project Markdown keeps working
+   AND teammates' synced data reads the same field unchanged: this is a
+   display/edit layer only, ZERO schema impact.
+   Supported: **bold**, *italic*, ~~strike~~, and red via an inline
+   <span style="color:#c00"> — markdown has no colour syntax, so red is
+   carried as HTML, the one form that still renders red when an export
+   lands in Word/Outlook. "Black" is simply the absence of colour.
+   ===================================================================== */
+const MD_RED='#c00';
+function mdEsc(t){ return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function mdToHtml(md){
+  let h=mdEsc(md||'');
+  // the colour span is the one HTML we deliberately let back through
+  h=h.replace(/&lt;span style="color:#c00"&gt;([\s\S]*?)&lt;\/span&gt;/g,'<span style="color:'+MD_RED+'">$1</span>');
+  h=h.replace(/\*\*([\s\S]+?)\*\*/g,'<b>$1</b>');
+  h=h.replace(/~~([\s\S]+?)~~/g,'<s>$1</s>');
+  h=h.replace(/(^|[^*])\*(?!\s)([^*\n]+?)\*(?!\*)/g,'$1<i>$2</i>');
+  return h.replace(/\n/g,'<br>');
+}
+/* Walk the edited DOM back to markdown. execCommand produces b/i/s/font
+   or style spans depending on the browser — all of them land here. */
+function mdFromNode(node){
+  let out='';
+  node.childNodes.forEach(n=>{
+    if(n.nodeType===3){ out+=n.nodeValue; return; }
+    if(n.nodeType!==1) return;
+    const tag=n.tagName.toLowerCase();
+    if(tag==='br'){ out+='\n'; return; }
+    const inner=mdFromNode(n);
+    if(tag==='b'||tag==='strong'){ out+= inner.trim()? '**'+inner+'**' : inner; return; }
+    if(tag==='i'||tag==='em'){ out+= inner.trim()? '*'+inner+'*' : inner; return; }
+    if(tag==='s'||tag==='strike'||tag==='del'){ out+= inner.trim()? '~~'+inner+'~~' : inner; return; }
+    const col=(n.getAttribute&&(n.getAttribute('color')||''))+' '+((n.style&&n.style.color)||'');
+    /* Chrome normalises execCommand('foreColor','#c00') to <font color="#cc0000">,
+       so every spelling of our red has to be recognised here or the colour is
+       silently dropped on save (caught in-harness, not by eye). */
+    const isRed=/#c00\b|#cc0000\b|rgb\(\s*204\s*,\s*0\s*,\s*0\s*\)|\bred\b/i.test(col);
+    if(isRed){ out+= inner.trim()? '<span style="color:'+MD_RED+'">'+inner+'</span>' : inner; return; }
+    if(tag==='div'||tag==='p'){ out+=(out&&!out.endsWith('\n')?'\n':'')+inner; return; }
+    out+=inner;
+  });
+  return out;
+}
+function mdGet(el){ return mdFromNode(el).replace(/\u00a0/g,' '); }
+function mdSet(el,md){ el.innerHTML=mdToHtml(md); }
+/* toolbar + shortcuts run through execCommand: it handles selection and the
+   caret correctly across browsers, which hand-rolled range surgery does not */
+function mdCmd(cmd,val){ const t=mdActive(); if(t){ t.focus(); document.execCommand(cmd,false,val||null); t.dispatchEvent(new Event('input',{bubbles:true})); } }
+function mdActive(){ const a=document.activeElement;
+  if(a && a.classList && a.classList.contains('note-box') && a.isContentEditable) return a;
+  const ed=document.getElementById('bigEditor');
+  return (ed && document.getElementById('editorModalBg').classList.contains('open')) ? ed : null; }
+function mdBold(){ mdCmd('bold'); }
+function mdItalic(){ mdCmd('italic'); }
+function mdStrike(){ mdCmd('strikeThrough'); }
+function mdRed(){ mdCmd('foreColor', MD_RED); }
+function mdBlack(){ mdCmd('foreColor', getComputedStyle(document.body).color); }
+/* paste as PLAIN text — otherwise a copy from Word drags a paragraph of
+   foreign markup into a field that has to serialise back to markdown */
+document.addEventListener('paste',e=>{ const t=mdActive(); if(!t||document.activeElement!==t) return;
+  e.preventDefault(); const txt=(e.clipboardData||window.clipboardData).getData('text/plain');
+  document.execCommand('insertText',false,txt); });
+/* bullets on a contenteditable: prefix each selected line, or open a new
+   item at the caret. insertText keeps undo history intact. */
+function mdBullets(){ const t=mdActive(); if(!t) return; t.focus();
+  const sel=String(window.getSelection?window.getSelection():'');
+  const out = sel ? sel.split('\n').map(l=>l.trim()?('- '+l.replace(/^-\s*/,'')):l).join('\n') : '- ';
+  document.execCommand('insertText',false,out);
+  t.dispatchEvent(new Event('input',{bubbles:true})); }
 
 /* =====================================================================
    TIME CARD
@@ -1532,6 +1727,14 @@ function entryStart(day,i){ return i===0?day.dayStart:day.entries[i-1].stop; }
 function entryMinutes(day,i){ const s=toMin(entryStart(day,i)),e=toMin(day.entries[i].stop); if(s==null||e==null) return 0; return Math.max(0,e-s); }
 function codeFor(day,letter){ return day.codes.find(c=>c.letter===letter); }
 function codeLabel(c){ return c?(c.client+(c.billing?(' '+c.billing):'')):'(unassigned)'; }
+/* Time-log dropdown hint: append the linked journal section name so
+   "a — VPS 2" reads "a — VPS 2 · Reconcile accounts". Derived at render
+   time, never stored — section renames propagate automatically, it can't
+   go stale, and there's no schema change. */
+function codeOptionLabel(c){ let s=c.letter+' — '+codeLabel(c);
+  if(c && c.linkSection){ let hint=String(c.linkSection).replace(/^\s*[0-9A-Za-z]+\s*[-–—.:]?\s*/,'').trim();
+    if(hint){ if(hint.length>18) hint=hint.slice(0,17)+'…'; s+=' · '+hint; } }
+  return s; }
 function dayTotals(day){ const t={billable:0,nonbillable:0,unpaid:0}; const byCode={};
   day.entries.forEach((en,i)=>{ const m=entryMinutes(day,i); const c=codeFor(day,en.code); const tp=c?c.type:'billable'; t[tp]+=m; byCode[en.code]=(byCode[en.code]||0)+m; });
   return {t,byCode}; }
@@ -1615,7 +1818,7 @@ function logRow(day,en,i){
   down.addEventListener('click',()=>moveEntryStep(i,1));
   tdMove.append(up,down);
   const tdCode=document.createElement('td'); const sel=document.createElement('select');
-  day.codes.forEach(c=>{ const o=document.createElement('option'); o.value=c.letter; o.textContent=c.letter+' — '+codeLabel(c); if(c.letter===en.code)o.selected=true; sel.appendChild(o); });
+  day.codes.forEach(c=>{ const o=document.createElement('option'); o.value=c.letter; o.textContent=codeOptionLabel(c); if(c.letter===en.code)o.selected=true; sel.appendChild(o); });
   // code change refreshes totals/codes only (NOT the log) so keyboard focus survives for fast Tab entry
   sel.onchange=()=>{ en.code=sel.value; save(); renderCodesTable(); renderTotals(); }; tdCode.appendChild(sel);
 
@@ -1638,7 +1841,10 @@ function logRow(day,en,i){
   if(sM!=null && eM!=null && eM<sM){ tdDur.classList.add('var-neg'); tdDur.title='Stop is before start'; tdDur.textContent='⚠ 0.00'; stop.style.borderColor='var(--danger)'; }
   const tdDesc=document.createElement('td'); const desc=document.createElement('input'); desc.value=en.desc||''; desc.placeholder='(optional note)';
   desc.onchange=()=>{ en.desc=desc.value; save(); }; tdDesc.appendChild(desc);
-  const tdDel=document.createElement('td'); const del=document.createElement('button'); del.className='ghost small'; del.textContent='✕';
+  const tdDel=document.createElement('td');
+  const bl=document.createElement('button'); bl.type='button'; bl.className='bell-btn'; bl.textContent='🔔';
+  bl.title='Time this block with the focus timer'; bl.addEventListener('click',()=>bellFromEntry(i)); tdDel.appendChild(bl);
+  const del=document.createElement('button'); del.className='ghost small'; del.textContent='✕';
   del.onclick=()=>{ day.entries.splice(i,1); renderTimecard(); save(); }; tdDel.appendChild(del);
   tr.append(tdMove,tdCode,tdStart,tdStop,tdDur,tdDesc,tdDel); return tr;
 }
@@ -1740,20 +1946,28 @@ function sortReport(key){
 }
 function updateSortCarets(){ document.querySelectorAll('.sortcaret').forEach(el=>{
   el.textContent = (el.dataset.k===reportSort.key) ? (reportSort.dir==='asc'?'▲':'▼') : ''; }); }
-function renderReport(){
-  const ym=document.getElementById('monthPicker').value||todayStr().slice(0,7);
+/* Single source of truth for the month report. The renderer AND every export
+   path read from THIS — never from the rendered table. Scraping <td> text is
+   how an export silently turns to garbage (or empty) after a layout change;
+   it also dragged the "▸" affordance marker into the copied text. */
+function reportData(ym){
   const totals={billable:0,nonbillable:0,unpaid:0}; const byClient={}; let dayCount=0;
   Object.keys(db.timecard.days).filter(d=>d.startsWith(ym)).forEach(d=>{ const day=db.timecard.days[d]; let used=false;
     day.entries.forEach((en,i)=>{ const m=entryMinutes(day,i); if(m>0)used=true; const c=codeFor(day,en.code); const tp=c?c.type:'billable'; totals[tp]+=m;
       const key=(codeLabel(c)||'(unassigned)')+'|'+tp; if(!byClient[key]) byClient[key]={label:codeLabel(c),type:tp,mins:0}; byClient[key].mins+=m; });
     if(used) dayCount++; });
+  const rows=Object.values(byClient).sort(reportComparator);
+  const grand=totals.billable+totals.nonbillable+totals.unpaid||1;
+  return {ym,totals,rows,dayCount,grand};
+}
+function renderReport(){
+  const ym=document.getElementById('monthPicker').value||todayStr().slice(0,7);
+  const {totals,rows,dayCount,grand}=reportData(ym);
   document.getElementById('rBill').textContent=fmtH(totals.billable);
   document.getElementById('rNon').textContent=fmtH(totals.nonbillable);
   document.getElementById('rUnpaid').textContent=fmtH(totals.unpaid);
   document.getElementById('rTotal').textContent=fmtH(totals.billable+totals.nonbillable)+' · '+dayCount+'d';
   document.getElementById('rRange').textContent=ym;
-  const grand=totals.billable+totals.nonbillable+totals.unpaid||1;
-  const rows=Object.values(byClient).sort(reportComparator);
   updateSortCarets();
   const body=document.getElementById('reportBody'); body.innerHTML='';
   rows.forEach(r=>{ const tr=document.createElement('tr'); const pct=r.mins/grand*100;
@@ -1818,8 +2032,14 @@ function copySummary(){ const day=curDay(); const {t,byCode}=dayTotals(day);
   if(wins.length){ plain.push('', "What's Important Now:"); html.push('', "<b>What's Important Now:</b>");
     wins.forEach(w=>{ const mk=w.done?'[x]':'[ ]'; plain.push('  '+mk+' '+w.text); html.push('  '+mk+' '+escapeHtml(w.text)); }); }
   showCopy('Daily Summary for CCH', plain.join('\n'), html.join('\n')); }
-function copyReport(){ const rows=[...document.querySelectorAll('#reportBody tr')].map(tr=>{ const td=tr.querySelectorAll('td'); if(td.length<3) return ''; return td[0].textContent+' — '+td[2].textContent; }).filter(Boolean);
-  showCopy('Month Report ('+document.getElementById('monthPicker').value+')', rows.join('\n')); }
+function copyReport(){
+  const ym=document.getElementById('monthPicker').value||todayStr().slice(0,7);
+  const {totals,rows,dayCount}=reportData(ym);
+  if(!rows.length){ showCopy('Month Report ('+ym+')','No entries this month.'); return; }
+  const lines=rows.map(r=>r.label+' — '+fmtH(r.mins));
+  lines.push('', 'Billable '+fmtH(totals.billable)+' · Non-billable '+fmtH(totals.nonbillable)
+    +' · Unpaid '+fmtH(totals.unpaid)+' · '+dayCount+'d');
+  showCopy('Month Report ('+ym+')', lines.join('\n')); }
 function showCopy(title,text,html){ copyBuffer=text; document.getElementById('copyTitle').textContent=title;
   const pre=document.getElementById('copyText'); if(html!=null) pre.innerHTML=html; else pre.textContent=text; openModal('copyModalBg'); }
 function doCopy(){ copyText(copyBuffer); }
@@ -2155,11 +2375,368 @@ function syncBoot(){ if(isConnected()){ setSyncDot('on'); if(db.sync.auto) gistP
 function scheduleAutoPush(){ if(syncing||!isConnected()||!db.sync.auto) return; clearTimeout(pushTimer); pushTimer=setTimeout(()=>gistPush(false), 4000); }
 document.addEventListener('click',()=>closeGearMenu());
 function cancelPendingConflict(){ if(conflictResolver){ const r=conflictResolver; conflictResolver=null; r('cancel'); } }
-document.querySelectorAll('.modal-bg').forEach(bg=>bg.addEventListener('mousedown',e=>{ if(e.target===bg){ bg.classList.remove('open'); bg.style.zIndex=''; updateModalLock(); if(bg.id==='conflictModalBg') cancelPendingConflict(); } }));
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeGearMenu(); document.querySelectorAll('.modal-bg.open').forEach(m=>{ m.classList.remove('open'); m.style.zIndex=''; }); updateModalLock(); cancelPendingConflict(); }
-  const ed=document.getElementById('bigEditor'); if(document.getElementById('editorModalBg').classList.contains('open')&&document.activeElement===ed){
-    if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='b'){ e.preventDefault(); mdWrap('**'); }
-    if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='i'){ e.preventDefault(); mdWrap('*'); } } });
+document.querySelectorAll('.modal-bg').forEach(bg=>bg.addEventListener('mousedown',e=>{ if(e.target===bg){
+  if(bg.id==='editorModalBg'){ commitExpanded(); editorCtx=null; renderJournal(); }   // never lose notes on a stray click
+  bg.classList.remove('open'); bg.style.zIndex=''; updateModalLock(); if(bg.id==='conflictModalBg') cancelPendingConflict(); } }));
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeGearMenu();
+    const so=document.getElementById('scratchOver');
+    if(so && so.classList.contains('open')){ scratchToggle(false); return; }   /* pocket tool first */
+    if(document.getElementById('editorModalBg').classList.contains('open')){ commitExpanded(); editorCtx=null; renderJournal(); }
+    document.querySelectorAll('.modal-bg.open').forEach(m=>{ m.classList.remove('open'); m.style.zIndex=''; }); updateModalLock(); cancelPendingConflict(); }
+  const mt=mdActive(); if(mt && document.activeElement===mt){
+    if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='b'){ e.preventDefault(); mdBold(); }
+    if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='i'){ e.preventDefault(); mdItalic(); } } });
+
+/* =====================================================================
+   SCRATCH SHEET — a pocket napkin (A1..H25) for un-squinting numbers:
+   type text, type numbers, or start a cell with '=' for arithmetic
+   (+ - * / parentheses), cell refs, and SUM/AVG/MIN/MAX over ranges.
+
+   ⚠ PJT DIVERGES FROM CTT HERE, DELIBERATELY. In CTT the sheet lives in
+   db.scratch and rides the normal save(). PJT is TEAM-SYNCED, so adding a
+   field would change a shared data shape with colleagues' data at stake.
+   Here the sheet is session-scoped only: sessionStorage under its own key,
+   NEVER in db, NEVER through save(). Zero schema impact, no normalize()
+   change, no migration, nothing for teammates to test. It survives an
+   accidental refresh and nothing more — a napkin, not a record.
+   ===================================================================== */
+const SC_COLS=['A','B','C','D','E','F','G','H'], SC_ROWS=25;
+const SCRATCH_KEY='pjt_scratch';
+let _scMem={};                                   /* the sheet, in memory only */
+function scCells(){ return _scMem; }
+function scRaw(ref){ const v=_scMem[ref]; return v==null?'':String(v); }
+/* sessionStorage is per-tab and outside the synced db; if it's unavailable
+   (locked-down WebView) we simply stay in memory — never a hard failure. */
+function scPersist(){ try{ sessionStorage.setItem(SCRATCH_KEY, JSON.stringify(_scMem)); }catch(_){} }
+function scLoad(){ try{ const o=JSON.parse(sessionStorage.getItem(SCRATCH_KEY)||'{}');
+  if(o && typeof o==='object' && !Array.isArray(o)) _scMem=o; }catch(_){ _scMem={}; } }
+scLoad();
+
+/* tiny recursive-descent evaluator. resolve(ref) supplies cell values;
+   throws {err:'#…'} objects for anything unspeakable. */
+function scEvalExpr(s, resolve){
+  let i=0;
+  const ws=()=>{ while(i<s.length && s[i]===' ') i++; };
+  function expr(){ let v=term(); ws();
+    while(i<s.length && (s[i]==='+'||s[i]==='-')){ const op=s[i++]; const r=term(); v=(op==='+')?v+r:v-r; ws(); }
+    return v; }
+  function term(){ let v=factor(); ws();
+    while(i<s.length && (s[i]==='*'||s[i]==='/')){ const op=s[i++]; const r=factor(); v=(op==='*')?v*r:v/r; ws(); }
+    return v; }
+  function factor(){ ws();
+    if(s[i]==='('){ i++; const v=expr(); ws(); if(s[i]!==')') throw {err:'#ERR'}; i++; return v; }
+    if(s[i]==='-'){ i++; return -factor(); }
+    if(s[i]==='+'){ i++; return factor(); }
+    const fn=/^(SUM|AVG|MIN|MAX)\(/i.exec(s.slice(i));
+    if(fn){ i+=fn[0].length; const vals=[];
+      for(;;){ ws();
+        const rng=/^([A-Ha-h])([0-9]{1,2})\s*:\s*([A-Ha-h])([0-9]{1,2})/.exec(s.slice(i));
+        if(rng){ i+=rng[0].length;
+          const c1=SC_COLS.indexOf(rng[1].toUpperCase()), c2=SC_COLS.indexOf(rng[3].toUpperCase());
+          const r1=parseInt(rng[2],10), r2=parseInt(rng[4],10);
+          if(r1<1||r1>SC_ROWS||r2<1||r2>SC_ROWS) throw {err:'#REF'};
+          for(let c=Math.min(c1,c2); c<=Math.max(c1,c2); c++)
+            for(let r=Math.min(r1,r2); r<=Math.max(r1,r2); r++) vals.push(resolve(SC_COLS[c]+r));
+        } else vals.push(expr());
+        ws(); if(s[i]===','){ i++; continue; } break; }
+      if(s[i]!==')') throw {err:'#ERR'}; i++;
+      const f=fn[1].toUpperCase();
+      if(!vals.length) return 0;
+      if(f==='SUM') return vals.reduce((a,b)=>a+b,0);
+      if(f==='AVG') return vals.reduce((a,b)=>a+b,0)/vals.length;
+      if(f==='MIN') return Math.min.apply(null,vals);
+      return Math.max.apply(null,vals); }
+    const ref=/^([A-Ha-h])([0-9]{1,2})(?![0-9A-Za-z])/.exec(s.slice(i));
+    if(ref){ i+=ref[0].length; const r=parseInt(ref[2],10);
+      if(r<1||r>SC_ROWS) throw {err:'#REF'};
+      return resolve(ref[1].toUpperCase()+r); }
+    const num=/^[0-9]*\.?[0-9]+/.exec(s.slice(i));
+    if(num){ i+=num[0].length; return parseFloat(num[0]); }
+    throw {err:'#ERR'}; }
+  const v=expr(); ws();
+  if(i<s.length) throw {err:'#ERR'};
+  return v;
+}
+/* cell value with memo + cycle detection. Blank and text cells count as 0 —
+   napkin rules, not Excel rules. Errors propagate as thrown {err} objects. */
+function scCellValue(ref, visiting, memo){
+  if(memo.has(ref)){ const m=memo.get(ref); if(m && m.err) throw m; return m; }
+  const raw=scRaw(ref).trim();
+  if(raw===''){ memo.set(ref,0); return 0; }
+  if(raw[0]==='='){
+    if(visiting.has(ref)) throw {err:'#CYCLE'};
+    visiting.add(ref);
+    let v;
+    try{ v=scEvalExpr(raw.slice(1), r=>scCellValue(r,visiting,memo)); }
+    catch(e){ visiting.delete(ref); const er=(e&&e.err)?e:{err:'#ERR'}; memo.set(ref,er); throw er; }
+    visiting.delete(ref);
+    if(!isFinite(v)){ const er={err:'#DIV0'}; memo.set(ref,er); throw er; }
+    memo.set(ref,v); return v; }
+  const n=Number(raw.replace(/,/g,''));
+  const v=isNaN(n)?0:n;
+  memo.set(ref,v); return v;
+}
+/* accounting face: thousands commas + fixed two decimals wherever a number
+   is DISPLAYED. Raw cell text is never touched — focus shows what you typed. */
+function scFmt(v){ return v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function scDisplay(ref, visiting, memo){
+  const raw=scRaw(ref);
+  if(raw.trim()==='') return {text:'',cls:''};
+  if(raw.trim()[0]==='='){
+    try{ return {text:scFmt(scCellValue(ref,visiting,memo)), cls:'sc-num'}; }
+    catch(e){ return {text:(e&&e.err)||'#ERR', cls:'sc-err'}; } }
+  const n=Number(raw.replace(/,/g,''));
+  return isNaN(n)?{text:raw,cls:''}:{text:scFmt(n),cls:'sc-num'};
+}
+/* While a formula is being composed, outline every cell it draws from — so
+   "which numbers am I using?" is answered by looking, not by parsing. */
+function scHilite(text){
+  if(!_scEls) return;
+  Object.keys(_scEls).forEach(r=>{ const td=_scEls[r].parentNode; if(td) td.classList.remove('sc-src'); });
+  const t=String(text||'');
+  if(t.trim()[0]!=='=') return;
+  const body=t.trim().slice(1);
+  const lit=new Set();
+  const rest=body.replace(/([A-Ha-h])([0-9]{1,2})\s*:\s*([A-Ha-h])([0-9]{1,2})/g,(m,c1,r1,c2,r2)=>{
+    const a=SC_COLS.indexOf(c1.toUpperCase()), b=SC_COLS.indexOf(c2.toUpperCase());
+    const x=parseInt(r1,10), y=parseInt(r2,10);
+    if(x>=1&&x<=SC_ROWS&&y>=1&&y<=SC_ROWS)
+      for(let c=Math.min(a,b);c<=Math.max(a,b);c++) for(let r=Math.min(x,y);r<=Math.max(x,y);r++) lit.add(SC_COLS[c]+r);
+    return ' '.repeat(m.length); });
+  let m2; const re=/([A-Ha-h])([0-9]{1,2})(?![0-9A-Za-z])/g;
+  while((m2=re.exec(rest))){ const r=parseInt(m2[2],10);
+    if(r>=1&&r<=SC_ROWS) lit.add(m2[1].toUpperCase()+r); }
+  lit.forEach(r=>{ const el=_scEls[r]; if(el && el.parentNode) el.parentNode.classList.add('sc-src'); });
+}
+let _scEls=null;              /* ref -> its input; grid DOM built once and kept */
+let _scPoint={active:false};  /* Excel-style point-to-refer state */
+let _scCur=null;              /* the ref the composition bar mirrors */
+function scratchBuild(){
+  if(_scEls) return;
+  _scEls={};
+  const wrap=document.getElementById('scratchWrap'); if(!wrap) return;
+  const tbl=document.createElement('table'); tbl.className='scratch';
+  const thead=document.createElement('thead'); const hr=document.createElement('tr');
+  hr.appendChild(document.createElement('th'));
+  SC_COLS.forEach(c=>{ const th=document.createElement('th'); th.textContent=c; hr.appendChild(th); });
+  thead.appendChild(hr); tbl.appendChild(thead);
+  const tb=document.createElement('tbody');
+  for(let r=1;r<=SC_ROWS;r++){
+    const tr=document.createElement('tr');
+    const th=document.createElement('th'); th.textContent=r; tr.appendChild(th);
+    SC_COLS.forEach(c=>{ const ref=c+r;
+      const td=document.createElement('td');
+      const inp=document.createElement('input');
+      inp.dataset.ref=ref; inp.autocomplete='off'; inp.spellcheck=false;
+      inp.addEventListener('focus',()=>{ _scPoint.active=false; inp.value=scRaw(ref); inp.select();
+        _scCur=ref; const br=document.getElementById('scBarRef'), b=document.getElementById('scBarInput');
+        if(br) br.textContent=ref; if(b) b.value=inp.value; scHilite(inp.value); });
+      inp.addEventListener('blur',()=>{ _scPoint.active=false; scCommit(ref,inp.value); scHilite(''); });
+      /* any USER edit ends the last point-span (keydown alone misses IME/
+         paste, which fire input without a keydown) — the programmatic
+         insert itself doesn't fire 'input', so it survives */
+      inp.addEventListener('input',()=>{ _scPoint.active=false;
+        const b=document.getElementById('scBarInput'); if(b) b.value=inp.value; scHilite(inp.value); });
+      inp.addEventListener('keydown',ev=>{
+        _scPoint.active=false;
+        const ci=SC_COLS.indexOf(c);
+        const go=(rr,cc)=>{ const nx=_scEls[SC_COLS[cc]+rr]; if(nx){ ev.preventDefault(); nx.focus(); } };
+        if(ev.key==='Enter'){ ev.preventDefault();
+          const nx=_scEls[c+((r<SC_ROWS)?r+1:1)]; if(nx) nx.focus(); return; }
+        /* Excel's rule: Escape abandons an in-progress cell edit and stays in
+           the sheet. With nothing to abandon it falls through to the document
+           handler, which puts the pocket tool away. */
+        if(ev.key==='Escape'){
+          if(inp.value!==scRaw(ref)){ ev.preventDefault(); ev.stopPropagation();
+            inp.value=scRaw(ref); inp.select();
+            const b=document.getElementById('scBarInput'); if(b) b.value=inp.value;
+            scHilite(inp.value); }
+          return; }
+        if(ev.key==='ArrowDown'){ if(r<SC_ROWS) go(r+1,ci); return; }
+        if(ev.key==='ArrowUp'){ if(r>1) go(r-1,ci); return; }
+        /* Left/Right leave the cell only from the text's edge (or with the
+           whole value selected) — mid-text they stay caret moves, so editing
+           a formula never fights navigation */
+        const full=(inp.selectionStart===0 && inp.selectionEnd===inp.value.length);
+        if(ev.key==='ArrowLeft'  && (full || (inp.selectionStart===0 && inp.selectionEnd===0))){ if(ci>0) go(r,ci-1); return; }
+        if(ev.key==='ArrowRight' && (full || (inp.selectionStart===inp.value.length && inp.selectionEnd===inp.value.length))){ if(ci<SC_COLS.length-1) go(r,ci+1); return; } });
+      inp.addEventListener('mousedown',ev=>{
+        const act=document.activeElement;
+        const isCell=!!(act && act.dataset && act.dataset.ref), isBar=!!(act && act.id==='scBarInput');
+        if(!act || act===inp || (!isCell && !isBar)) return;
+        const v=act.value; if(v[0]!=='=') return;
+        let s=act.selectionStart, e=act.selectionEnd;
+        if(_scPoint.active && _scPoint.el===act){ s=_scPoint.start; e=_scPoint.end; }
+        const before=v.slice(0,s);
+        if(!/[=+\-*/(,:\s]$/.test(before)) return;   /* complete formula → let the click commit & move */
+        ev.preventDefault();                          /* keep focus in the formula cell */
+        act.value=before+ref+v.slice(e);
+        const ne=s+ref.length;
+        act.setSelectionRange(ne,ne);
+        _scPoint={active:true, el:act, start:s, end:ne};
+        const bi=document.getElementById('scBarInput'); if(bi && act!==bi) bi.value=act.value;
+        scHilite(act.value); });
+      td.appendChild(inp); tr.appendChild(td); _scEls[ref]=inp; });
+    tb.appendChild(tr); }
+  tbl.appendChild(tb); wrap.appendChild(tbl);
+  /* wire the composition bar (once). Enter commits and steps down a row;
+     Escape reverts and returns to the cell; blur commits. */
+  const bar=document.getElementById('scBarInput'), barRef=document.getElementById('scBarRef');
+  if(bar && !bar.dataset.wired){
+    bar.dataset.wired='1';
+    _scCur=_scCur||'A1'; barRef.textContent=_scCur; bar.value=scRaw(_scCur);
+    bar.addEventListener('focus',()=>{ _scPoint.active=false; if(_scCur) bar.value=scRaw(_scCur); scHilite(bar.value); });
+    bar.addEventListener('input',()=>{ _scPoint.active=false; scHilite(bar.value); });
+    bar.addEventListener('blur',()=>{ _scPoint.active=false; if(_scCur) scCommit(_scCur,bar.value); scHilite(''); });
+    bar.addEventListener('keydown',ev=>{
+      if(ev.key==='Enter'){ ev.preventDefault();
+        if(_scCur){ scCommit(_scCur,bar.value);
+          const m=/^([A-H])([0-9]+)$/.exec(_scCur);
+          if(m){ const nr=(+m[2]<SC_ROWS)?(+m[2]+1):1; const nx=_scEls[m[1]+nr]; if(nx) nx.focus(); } }
+        return; }
+      if(ev.key==='Escape'){
+        if(_scCur && bar.value!==scRaw(_scCur)){ ev.preventDefault(); ev.stopPropagation();
+          bar.value=scRaw(_scCur); scHilite(bar.value);
+          const cx=_scEls[_scCur]; if(cx) cx.focus(); }
+        return; }
+      _scPoint.active=false; });
+  }
+  scRecalc();
+}
+/* NOTE: scPersist(), never save(). The napkin stays out of the journal. */
+function scCommit(ref,val){
+  const v=String(val);
+  if(v!==scRaw(ref)){
+    if(v.trim()==='') delete _scMem[ref]; else _scMem[ref]=v;
+    scPersist(); }
+  scRecalc();
+}
+function scRecalc(){
+  if(!_scEls) return;
+  const memo=new Map(), visiting=new Set();
+  Object.keys(_scEls).forEach(ref=>{
+    const inp=_scEls[ref];
+    if(document.activeElement===inp) return;   /* never clobber a cell mid-edit */
+    const d=scDisplay(ref,visiting,memo);
+    inp.value=d.text; inp.className=d.cls; });
+}
+function scratchToggle(force){
+  const o=document.getElementById('scratchOver'); if(!o) return;
+  const open=(force!=null)?force:!o.classList.contains('open');
+  if(open){ scratchBuild(); scRecalc(); }
+  else if(document.activeElement && ((document.activeElement.dataset && document.activeElement.dataset.ref) || document.activeElement.id==='scBarInput')){ document.activeElement.blur(); }
+  o.classList.toggle('open',open);
+}
+/* clearing is a two-tap arm, not a modal — fewer ways to lose a napkin */
+let _scArm=null;
+function scratchClear(b){
+  if(_scArm){ clearTimeout(_scArm); _scArm=null;
+    _scMem={}; scPersist(); scRecalc(); b.textContent='Clear sheet'; return; }
+  b.textContent='Really clear?';
+  _scArm=setTimeout(()=>{ _scArm=null; b.textContent='Clear sheet'; },2600);
+}
+
+/* =====================================================================
+   THE FOCUS TIMER ("tinker's bell") — ephemeral by design: no db field,
+   no save(), nothing to sync or migrate. Duration comes from a time
+   block's 🔔 (its computed minutes) or is typed. Ticking runs off an
+   endAt WALL-CLOCK timestamp, not a decrementing counter, so a throttled
+   or backgrounded window never drifts.
+   Muted by default — the pulse is the signal, not a noise.
+   ===================================================================== */
+const bell={total:0,left:0,endAt:0,running:false,tick:null,muted:true,rung:false,label:''};
+const BELL_DEFS='<defs>'
+ +'<radialGradient id="bvCell" cx="50%" cy="42%" r="75%"><stop offset="0%" stop-color="var(--accent)"/><stop offset="100%" stop-color="var(--accent2)"/></radialGradient>'
+ +'</defs>';
+const bvClamp=v=>Math.max(0,Math.min(1,v));
+/* the ember grid: 100 squares that empty as the time goes. A pure function
+   of elapsed fraction — it owns no clock, no state, no sound. */
+function bvGrid(p){ const N=10, cell=14, gap=3, lit=Math.ceil((1-p)*N*N); let o='';
+  for(let i=0;i<N*N;i++){ const r=Math.floor(i/N), c=i%N;
+    o+='<rect x="'+(c*(cell+gap))+'" y="'+(r*(cell+gap))+'" width="'+cell+'" height="'+cell+'" rx="2" fill="'+(i<lit?'url(#bvCell)':'var(--group)')+'" opacity="'+(i<lit?'.92':'.45')+'"/>'; }
+  return {vb:'0 0 167 167', body:o}; }
+let _bellEls=null;
+function bellEls(){ if(_bellEls) return _bellEls;
+  _bellEls={ panel:document.getElementById('bellPanel'),
+    vis:document.getElementById('bellVis'), time:document.getElementById('bellTime'),
+    mini:document.getElementById('bellMini'), forEl:document.getElementById('bellFor'),
+    word:document.getElementById('bellWord'), dur:document.getElementById('bellDur'),
+    start:document.getElementById('bellStartBtn'), reset:document.getElementById('bellResetBtn'),
+    mute:document.getElementById('bellMuteBtn') };
+  return _bellEls; }
+/* bell.left changes once per second, so the identity guard makes this a
+   1 Hz repaint — ambient by construction. */
+let _bvLastP=-1;
+function bellVisPaint(force){ const e=bellEls(); if(!e.vis) return;
+  const p=bell.total? bvClamp(1-bell.left/bell.total) : 0;
+  if(!force && _bvLastP===p) return;
+  _bvLastP=p;
+  const out=bvGrid(p);
+  e.vis.innerHTML='<svg viewBox="'+out.vb+'" xmlns="http://www.w3.org/2000/svg" fill="none">'+BELL_DEFS+out.body+'</svg>'; }
+function bellVisInit(){ const e=bellEls(); if(!e.vis||e.vis.childElementCount) return; bellVisPaint(true); }
+function bellMins(){ const m=parseInt(bellEls().dur.value,10); return (isNaN(m)||m<1)?25:Math.min(m,720); }
+function bellFmt(t){ const mm=Math.floor(t/60), ss=t%60;
+  return mm>=60 ? Math.floor(mm/60)+':'+String(mm%60).padStart(2,'0')+':'+String(ss).padStart(2,'0')
+                : mm+':'+String(ss).padStart(2,'0'); }
+function bellPaint(){ const e=bellEls(); if(!e.panel) return;
+  const str=bell.total?bellFmt(bell.left):bellFmt(bellMins()*60);
+  if(e.time) e.time.textContent=str;
+  bellVisPaint();
+  if(e.mini) e.mini.textContent=bell.rung?'Rung.':(bell.running?(str+(bell.label?' · '+bell.label:'')):''); }
+function bellToggle(force){ const e=bellEls(); if(!e.panel) return;
+  const open=(force!=null)?force:!e.panel.classList.contains('open');
+  e.panel.classList.toggle('open',open); bellVisInit(); bellPaint(); }
+function bellClearRung(){ bell.rung=false; const e=bellEls();
+  if(e.vis) e.vis.classList.remove('rung'); if(e.word) e.word.textContent=''; }
+function bellSet(mins,label){ bellStop(); bellClearRung();
+  bell.total=Math.max(1,Math.round(mins))*60; bell.left=bell.total; bell.label=label||'';
+  const e=bellEls(); e.dur.value=String(Math.round(bell.total/60)); e.start.textContent='Start';
+  e.forEl.textContent=label?('Keeping time for '+label+'.'):"Set a duration, or ring one in from a time block's 🔔.";
+  bellToggle(true); }
+/* the 🔔 on a time-log row: the timer knows what you're timing */
+function bellFromEntry(i){ const day=curDay(); const en=day.entries[i]; if(!en) return;
+  const m=entryMinutes(day,i); const c=codeFor(day,en.code);
+  bellSet(m>0?m:25, en.code+' — '+codeLabel(c));
+  try{ document.getElementById('bellPanel').scrollIntoView({behavior:'smooth',block:'nearest'}); }catch(_){} }
+function bellStartPause(){ const e=bellEls();
+  if(bell.running){ bell.left=Math.max(0,Math.round((bell.endAt-Date.now())/1000)); bellStop();
+    e.start.textContent='Resume'; bellPaint(); return; }
+  const midway=bell.left>0 && bell.left<bell.total && !bell.rung;
+  if(!midway){ bellClearRung(); bell.total=bellMins()*60; bell.left=bell.total; bellVisPaint(true); }
+  bell.endAt=Date.now()+bell.left*1000; bell.running=true; e.start.textContent='Pause';
+  bell.tick=setInterval(bellTick,250); bellTick(); }
+function bellStop(){ bell.running=false; if(bell.tick){ clearInterval(bell.tick); bell.tick=null; } }
+function bellReset(){ bellStop(); bellClearRung(); bell.label='';
+  bell.total=bellMins()*60; bell.left=bell.total; const e=bellEls();
+  e.start.textContent='Start'; e.forEl.textContent="Set a duration, or ring one in from a time block's 🔔.";
+  bellVisPaint(true); bellPaint(); }
+function bellTick(){ if(!bell.running) return;
+  bell.left=Math.max(0,Math.round((bell.endAt-Date.now())/1000)); bellPaint();
+  if(bell.left<=0){ bellStop(); bellRing(); } }
+function bellRing(){ bell.rung=true; const e=bellEls();
+  e.start.textContent='Start'; e.word.textContent='Rung. The block is yours to close.';
+  e.vis.classList.add('rung'); bellPaint(); if(!bell.muted) bellChime(); }
+let bellAC=null;
+/* one soft synthesised strike — never two, never a repeat */
+function bellChime(){ try{
+  bellAC=bellAC||new (window.AudioContext||window.webkitAudioContext)();
+  const t=bellAC.currentTime;
+  [[880,.20,2.6],[1318.5,.10,2.0],[2093,.04,1.2]].forEach(([f,g,dur])=>{
+    const o=bellAC.createOscillator(), gn=bellAC.createGain();
+    o.type='sine'; o.frequency.value=f;
+    gn.gain.setValueAtTime(0.0001,t); gn.gain.exponentialRampToValueAtTime(g,t+0.02);
+    gn.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o.connect(gn); gn.connect(bellAC.destination); o.start(t); o.stop(t+dur+0.1); });
+ }catch(e){} }
+function bellMuteToggle(){ bell.muted=!bell.muted;
+  bellEls().mute.textContent='Sound: '+(bell.muted?'off':'on'); }
+/* wired with addEventListener, not inline onclick */
+(function(){ const e=bellEls(); if(!e.panel) return;
+  if(e.start) e.start.addEventListener('click',bellStartPause);
+  if(e.reset) e.reset.addEventListener('click',bellReset);
+  if(e.mute)  e.mute.addEventListener('click',bellMuteToggle);
+  if(e.dur)   e.dur.addEventListener('change',()=>{ if(!bell.running&&!bell.rung) bellReset(); });
+  bellVisInit(); bellPaint(); })();
 
 /* =====================================================================
    EXAMPLE SEED — a neutral, fictional demo so a first-time user sees how
