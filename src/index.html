@@ -239,6 +239,18 @@ input.sc-err{color:var(--danger);text-align:right;}
    when your eyes come looking. Never flashes, never rings twice. */
 @keyframes bellPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
 .bell-vis.rung{animation:bellPulse 2.6s ease-in-out infinite;filter:drop-shadow(0 0 18px rgba(37,99,235,.45));}
+/* ---- popped-out bell window (index.html#bell in a second Tauri window) ----
+   Sized in viewport units so dragging the window bigger/smaller resizes the
+   countdown with it — no resize listener needed. Floors keep a tiny window
+   readable; the vh cap stops the controls being pushed out of view. */
+body.bellwin{margin:0;padding:0;background:var(--bg);overflow:hidden;}
+body.bellwin .bellwin-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:10px;height:100vh;box-sizing:border-box;padding:14px 12px;text-align:center;}
+body.bellwin .bell-vis{width:max(110px,min(84vw,54vh));height:max(110px,min(84vw,54vh));}
+body.bellwin .bell-time{font-size:clamp(30px,13vw,76px);}
+body.bellwin .bell-controls{display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;}
+body.bellwin .bellwin-for{font-size:12px;min-height:1.2em;}
+body.bellwin .bellwin-word{font-size:12px;font-style:italic;min-height:1.2em;}
 @media (prefers-reduced-motion: reduce){ .bell-vis.rung{animation:none;filter:drop-shadow(0 0 18px rgba(37,99,235,.6));} }
 .bell-btn{border:none;background:transparent;cursor:pointer;font-size:13px;padding:2px 4px;opacity:.55;line-height:1;}
 .bell-btn:hover{opacity:1;background:transparent;}
@@ -247,7 +259,7 @@ input.sc-err{color:var(--danger);text-align:right;}
 <body>
 
 <div class="appbar">
-  <div class="brand"><img class="brand-icon" alt="PJT" src="data:image/png;base64,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" /><span>Project Journal &amp; Timecard<small>Project journal + timecard, team-synced · v3.5.0</small></span></div>
+  <div class="brand"><img class="brand-icon" alt="PJT" src="data:image/png;base64,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" /><span>Project Journal &amp; Timecard<small>Project journal + timecard, team-synced · v3.6.0</small></span></div>
   <div class="maintabs">
     <div class="maintab active" data-m="journal" onclick="switchMain('journal')">Project Journal</div>
     <div class="maintab" data-m="timecard" onclick="switchMain('timecard')">Time Card</div>
@@ -408,6 +420,7 @@ input.sc-err{color:var(--danger);text-align:right;}
             <button class="small" id="bellStartBtn">Start</button>
             <button class="ghost small" id="bellResetBtn">Reset</button>
             <button class="ghost small" id="bellMuteBtn" title="One soft ring when time is up — never more">Sound: off</button>
+            <button class="ghost small hidden" id="bellPopBtn" title="Float the timer in its own always-on-top window">Pop out ↗</button>
           </div>
           <div class="muted" id="bellWord" style="font-style:italic"></div>
         </div>
@@ -869,7 +882,7 @@ input.sc-err{color:var(--danger);text-align:right;}
 
 <script>
 /* =====================================================================
-   Project Journal & Timecard (PJT) v3.5.0 — Project Journal + Time Card, one file.
+   Project Journal & Timecard (PJT) v3.6.0 — Project Journal + Time Card, one file.
    Single shared db, single localStorage key 'projtime_v8', JSON backups.
    Desktop (Tauri) build adds a durable on-disk copy + rolling daily backups,
    and optional passphrase encryption at rest (AES-GCM via Web Crypto). Both
@@ -2692,7 +2705,7 @@ function bellSet(mins,label){ bellStop(); bellClearRung();
   bell.total=Math.max(1,Math.round(mins))*60; bell.left=bell.total; bell.label=label||'';
   const e=bellEls(); e.dur.value=String(Math.round(bell.total/60)); e.start.textContent='Start';
   e.forEl.textContent=label?('Keeping time for '+label+'.'):"Set a duration, or ring one in from a time block's 🔔.";
-  bellToggle(true); }
+  bellToggle(true); bellBroadcast(); }
 /* the 🔔 on a time-log row: the timer knows what you're timing */
 function bellFromEntry(i){ const day=curDay(); const en=day.entries[i]; if(!en) return;
   const m=entryMinutes(day,i); const c=codeFor(day,en.code);
@@ -2700,22 +2713,22 @@ function bellFromEntry(i){ const day=curDay(); const en=day.entries[i]; if(!en) 
   try{ document.getElementById('bellPanel').scrollIntoView({behavior:'smooth',block:'nearest'}); }catch(_){} }
 function bellStartPause(){ const e=bellEls();
   if(bell.running){ bell.left=Math.max(0,Math.round((bell.endAt-Date.now())/1000)); bellStop();
-    e.start.textContent='Resume'; bellPaint(); return; }
+    e.start.textContent='Resume'; bellPaint(); bellBroadcast(); return; }
   const midway=bell.left>0 && bell.left<bell.total && !bell.rung;
   if(!midway){ bellClearRung(); bell.total=bellMins()*60; bell.left=bell.total; bellVisPaint(true); }
   bell.endAt=Date.now()+bell.left*1000; bell.running=true; e.start.textContent='Pause';
-  bell.tick=setInterval(bellTick,250); bellTick(); }
+  bell.tick=setInterval(bellTick,250); bellTick(); bellBroadcast(); }
 function bellStop(){ bell.running=false; if(bell.tick){ clearInterval(bell.tick); bell.tick=null; } }
 function bellReset(){ bellStop(); bellClearRung(); bell.label='';
   bell.total=bellMins()*60; bell.left=bell.total; const e=bellEls();
   e.start.textContent='Start'; e.forEl.textContent="Set a duration, or ring one in from a time block's 🔔.";
-  bellVisPaint(true); bellPaint(); }
+  bellVisPaint(true); bellPaint(); bellBroadcast(); }
 function bellTick(){ if(!bell.running) return;
   bell.left=Math.max(0,Math.round((bell.endAt-Date.now())/1000)); bellPaint();
   if(bell.left<=0){ bellStop(); bellRing(); } }
 function bellRing(){ bell.rung=true; const e=bellEls();
   e.start.textContent='Start'; e.word.textContent='Rung. The block is yours to close.';
-  e.vis.classList.add('rung'); bellPaint(); if(!bell.muted) bellChime(); }
+  e.vis.classList.add('rung'); bellPaint(); if(!bell.muted && !BELL_WIN) bellChime(); bellBroadcast(); }
 let bellAC=null;
 /* one soft synthesised strike — never two, never a repeat */
 function bellChime(){ try{
@@ -2729,14 +2742,114 @@ function bellChime(){ try{
     o.connect(gn); gn.connect(bellAC.destination); o.start(t); o.stop(t+dur+0.1); });
  }catch(e){} }
 function bellMuteToggle(){ bell.muted=!bell.muted;
-  bellEls().mute.textContent='Sound: '+(bell.muted?'off':'on'); }
+  const m=bellEls().mute; if(m) m.textContent='Sound: '+(bell.muted?'off':'on'); bellBroadcast(); }
+/* =====================================================================
+   THE POPOUT — a REAL second Tauri window, not Document Picture-in-Picture.
+   PiP is a Chromium-only API: absent on macOS WKWebView and not a contract
+   worth shipping against on WebView2. A real window also buys OS-level
+   always-on-top, real resizing and a taskbar presence.
+
+   It loads THIS SAME FILE at index.html#bell (one-file rule intact) and
+   rebuilds the same element IDs, so every bell function above works in the
+   popout unchanged. The two windows are separate JS contexts, so they
+   COMMUNICATE rather than share objects: each runs its own countdown
+   seeded from the wall-clock endAt, which is exactly why endAt was chosen
+   over a tick counter — both stay correct independently.
+   ===================================================================== */
+const BELL_WIN = (typeof location!=='undefined') && location.hash==='#bell';
+const BELL_LABEL='tinkers-bell';
+function bellTauriEvent(){ return (window.__TAURI__ && window.__TAURI__.event) || null; }
+/* Tauri 2 moved WebviewWindow to its own namespace; v1 exposed it on .window.
+   Resolve both so a version difference degrades instead of dying. */
+function bellWebviewCtor(){ const T=window.__TAURI__; if(!T) return null;
+  return (T.webviewWindow && T.webviewWindow.WebviewWindow) || (T.window && T.window.WebviewWindow) || null; }
+function bellEmit(evt,payload){ const E=bellTauriEvent(); if(!E||!E.emit) return;
+  try{ E.emit(evt,payload); }catch(_){}}
+function bellListen(evt,fn){ const E=bellTauriEvent(); if(!E||!E.listen) return;
+  try{ E.listen(evt,e=>fn(e&&e.payload)); }catch(_){}}
+/* the full timer state, wall-clock based, safe to apply in either window */
+function bellState(){ return {total:bell.total,left:bell.left,endAt:bell.endAt,running:bell.running,
+  rung:bell.rung,muted:bell.muted,label:bell.label}; }
+function bellBroadcast(){ bellEmit('bell:state',bellState()); }
+function bellApplyState(s){ if(!s) return;
+  bellStop();                                   // drop any local interval first
+  bell.total=s.total||0; bell.endAt=s.endAt||0; bell.muted=!!s.muted; bell.label=s.label||'';
+  bell.left = s.running ? Math.max(0,Math.round((bell.endAt-Date.now())/1000)) : (s.left||0);
+  bell.rung=!!s.rung;
+  const e=bellEls();
+  if(e.dur && bell.total) e.dur.value=String(Math.round(bell.total/60));
+  if(e.start) e.start.textContent = s.running ? 'Pause' : (bell.left>0&&bell.total&&bell.left<bell.total?'Resume':'Start');
+  if(e.mute) e.mute.textContent='Sound: '+(bell.muted?'off':'on');
+  if(e.forEl) e.forEl.textContent = bell.label?('Keeping time for '+bell.label+'.'):"Set a duration, or ring one in from a time block's 🔔.";
+  if(e.vis) e.vis.classList.toggle('rung',bell.rung);
+  if(e.word) e.word.textContent = bell.rung?'Rung. The block is yours to close.':'';
+  if(s.running){ bell.running=true; bell.tick=setInterval(bellTick,250); }
+  bellVisPaint(true); bellPaint(); }
+/* main window: open (or focus) the popout */
+async function bellPopout(){
+  const Ctor=bellWebviewCtor(); if(!Ctor){ flash('Popout needs the desktop app.'); return; }
+  try{
+    const existing = Ctor.getByLabel ? await Ctor.getByLabel(BELL_LABEL) : null;
+    if(existing){ try{ await existing.setFocus(); }catch(_){} bellBroadcast(); return; }
+  }catch(_){}
+  try{
+    const w=new Ctor(BELL_LABEL,{ url:'index.html#bell', title:"Tinker's bell",
+      width:340, height:560, minWidth:220, minHeight:300,
+      alwaysOnTop:true, resizable:true, decorations:true });
+    w.once('tauri://created',()=>{ setTimeout(bellBroadcast,400); });
+    w.once('tauri://error',err=>{ console.error('bell popout',err); flash('Could not open the timer window.'); });
+  }catch(err){ console.error('bell popout',err); flash('Could not open the timer window.'); }
+}
+/* main window: answer the popout's hello, and accept its commands */
+function bellHostInit(){
+  const btn=document.getElementById('bellPopBtn');
+  if(btn && bellWebviewCtor()){ btn.classList.remove('hidden'); btn.addEventListener('click',bellPopout); }
+  bellListen('bell:hello',()=>bellBroadcast());
+  bellListen('bell:cmd',p=>{ const a=p&&p.action;
+    if(a==='startpause') bellStartPause();
+    else if(a==='reset') bellReset();
+    else if(a==='mute') bellMuteToggle();
+    else if(a==='mins' && p.mins){ const e=bellEls(); if(e.dur){ e.dur.value=String(p.mins); } bellReset(); } });
+}
+/* popout window: replace the page with just the timer, reusing the same IDs
+   so every bell function above works here untouched. Controls are wired with
+   addEventListener — inline onclick resolves against the wrong document. */
+function bellWindowBoot(){
+  document.title="Tinker's bell";
+  document.body.className='bellwin'+(document.body.classList.contains('dark')?' dark':'');
+  document.body.innerHTML=
+    '<div class="bellwin-wrap" id="bellPanel">'
+   +'  <div class="bell-vis" id="bellVis" aria-hidden="true"></div>'
+   +'  <div class="bell-time" id="bellTime">25:00</div>'
+   +'  <div class="muted bellwin-for" id="bellFor"></div>'
+   +'  <div class="bell-controls">'
+   +'    <label class="muted">Min <input type="text" inputmode="numeric" id="bellDur" value="25" style="width:52px;display:inline-block;padding:3px 5px"></label>'
+   +'    <button class="small" id="bellStartBtn">Start</button>'
+   +'    <button class="ghost small" id="bellResetBtn">Reset</button>'
+   +'    <button class="ghost small" id="bellMuteBtn">Sound: off</button>'
+   +'  </div>'
+   +'  <div class="muted bellwin-word" id="bellWord"></div>'
+   +'  <span class="hidden" id="bellMini"></span>'
+   +'</div>';
+  _bellEls=null;                                  // rebuild the element cache
+  const e=bellEls();
+  e.start.addEventListener('click',()=>bellEmit('bell:cmd',{action:'startpause'}));
+  e.reset.addEventListener('click',()=>bellEmit('bell:cmd',{action:'reset'}));
+  e.mute .addEventListener('click',()=>bellEmit('bell:cmd',{action:'mute'}));
+  e.dur  .addEventListener('change',()=>bellEmit('bell:cmd',{action:'mins',mins:bellMins()}));
+  bellListen('bell:state',bellApplyState);
+  bellVisInit(); bellPaint();
+  bellEmit('bell:hello',{});                      // ask the main window for current state
+  setTimeout(()=>bellEmit('bell:hello',{}),500);  // retry once in case main wasn't listening yet
+}
 /* wired with addEventListener, not inline onclick */
-(function(){ const e=bellEls(); if(!e.panel) return;
+(function(){ if(BELL_WIN) return;            // popout wires its own controls
+  const e=bellEls(); if(!e.panel) return;
   if(e.start) e.start.addEventListener('click',bellStartPause);
   if(e.reset) e.reset.addEventListener('click',bellReset);
   if(e.mute)  e.mute.addEventListener('click',bellMuteToggle);
   if(e.dur)   e.dur.addEventListener('change',()=>{ if(!bell.running&&!bell.rung) bellReset(); });
-  bellVisInit(); bellPaint(); })();
+  bellVisInit(); bellPaint(); bellHostInit(); })();
 
 /* =====================================================================
    EXAMPLE SEED — a neutral, fictional demo so a first-time user sees how
@@ -2768,6 +2881,10 @@ function seedDemo(){
 }
 
 async function bootApp(){
+  /* The popout is the SAME file at #bell. It must never load or write the
+     database: two windows booting the app would both open journal.json and
+     clobber each other's writes. Bail out before encryption/storage. */
+  if(BELL_WIN){ bellWindowBoot(); return; }
   try{ await encBootstrap(); }catch(e){ console.error('encBootstrap',e); }
   load();
 }
