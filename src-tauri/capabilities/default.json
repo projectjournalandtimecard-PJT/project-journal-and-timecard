@@ -1,7 +1,10 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Core capabilities for the main window.",
-  "windows": ["main"],
-  "permissions": ["core:default"]
+  "description": "Core capabilities for the main window and the tinker's bell popout.",
+  "windows": ["main", "tinkers-bell"],
+  "permissions": [
+    "core:default",
+    "core:webview:allow-create-webview-window"
+  ]
 }
