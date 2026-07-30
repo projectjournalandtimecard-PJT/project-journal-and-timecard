@@ -109,10 +109,15 @@ table.role-reviewer .col-prep{display:none}
 /* rich notes: note surfaces are contenteditable so formatting shows as
    formatting. They still LOOK like the old boxes — same border, ink, and
    scroll — they just render **bold** as bold instead of printing asterisks. */
+/* A textarea sizes itself: fixed box, scrolls internally. A contenteditable
+   div does NOT — it grows to fit its content, and overflow:auto never engages
+   because the height is never constrained. So set an explicit height: the box
+   stays put and scrolls, exactly like the textarea it replaced, and
+   resize:vertical still lets the box be dragged taller with no cap. */
 .note-box[contenteditable]{white-space:pre-wrap;overflow:auto;cursor:text;
   border:1px solid var(--border);background:var(--panel);color:var(--text);
   border-radius:9px;padding:8px;width:100%;box-sizing:border-box;font-family:inherit;
-  font-size:13px;line-height:1.45;min-height:64px;resize:vertical;}
+  font-size:13px;line-height:1.45;height:64px;min-height:64px;resize:vertical;}
 .note-box[contenteditable]:focus{outline:2px solid var(--accent);outline-offset:-2px;}
 .note-box[contenteditable]:empty:before{content:attr(data-ph);color:var(--muted);}
 .note-box[contenteditable] b{font-weight:800;}
@@ -347,7 +352,7 @@ body.bellwin .bellwin-word{font-size:12px;font-style:italic;min-height:1.2em;}
       <button class="ghost small" id="notesToggle" onclick="toggleProjectNotes()">📝 Project Notes ▸</button>
       <div id="projectNotesPanel" class="hidden" style="margin-top:10px">
         <div id="projectNotes" class="note-box" contenteditable="true" spellcheck="true"
-          style="min-height:96px;width:100%"
+          style="height:150px;min-height:96px;width:100%"
           data-ph="Client contact info, phone numbers, general notes not tied to any section…"></div>
         <div class="cell-actions" style="margin-top:6px">
           <button class="ghost small" onclick="openProjectNotesEditor()">Expand ↗</button>
