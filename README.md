@@ -22,7 +22,7 @@ You don't build locally. Pushing to `main` — or clicking **Run workflow** on t
 
 1. Go to the **Actions** tab and open the latest **Build Windows installer** run.
 2. When it finishes (first run is slower while it compiles the CLI), download the **`pjt-windows-installers`** artifact at the bottom of the run.
-3. It contains the `.exe` (NSIS setup) and `.msi` (WiX) installers. Either works — the `.exe` setup is the usual choice.
+3. It contains the .exe (NSIS) installer. Windows will warn that the publisher is unrecognised because the installer is unsigned — choose More info → Run anyway.
 
 ## Distributing to coworkers
 
@@ -36,6 +36,9 @@ The Team code (which bundles the shared gist ID + token) is what you hand out se
 ## Updating the app
 
 Edit `src/index.html`, bump the version, commit, and push to `main`. A fresh build runs automatically; grab the new installer from that run.
+
+## Licensing
+Licensed under the MIT License — see LICENSE
 
 ## Notes
 
