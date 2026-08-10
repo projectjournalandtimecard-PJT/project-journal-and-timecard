@@ -73,6 +73,22 @@ select,input,textarea{border:1px solid var(--border);background:var(--panel);col
   border-radius:8px;padding:8px 10px;overflow:auto;white-space:nowrap;}
 .sync-note{font-size:12px;color:var(--muted);line-height:1.5;margin:6px 0 0;}
 .main-pane{display:none}.main-pane.active{display:block}
+/* v3.11.0 scratch range selection. Painted on the <td>, not the <input>,
+   because scRecalc rewrites every input's className on each pass. */
+td.sc-sel{background:rgba(37,99,235,.16);}
+td.sc-sel input{background:transparent;}
+/* v3.10.2 per-project colour. A plain data field on the project, so it exports,
+   syncs, and is ignored harmlessly by any older build. */
+.pcolor-dot{display:inline-block;width:10px;height:10px;border-radius:50%;flex:none;
+  margin-right:7px;vertical-align:middle;border:1px solid rgba(0,0,0,.15);}
+.recent-project{border-left:4px solid transparent;}
+.pcolor-row{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-top:8px;}
+.pcolor-sw{width:24px;height:24px;border-radius:7px;cursor:pointer;border:2px solid transparent;}
+.pcolor-sw.sel{border-color:var(--text);}
+.pcolor-sw.none{background:var(--panel);border:1px dashed var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--muted);}
+.proj-title-dot{width:14px;height:14px;border-radius:50%;display:inline-block;margin-right:9px;
+  vertical-align:middle;border:1px solid rgba(0,0,0,.15);}
 
 /* ---------- Journal ---------- */
 .app{display:flex;min-height:calc(100vh - 58px);}
@@ -211,6 +227,14 @@ body.modal-open{overflow:hidden;}
 .modal.cch{width:88vw;max-width:88vw;height:85vh;display:flex;flex-direction:column;resize:both;overflow:hidden;min-width:380px;min-height:300px;}
 .modal.cch pre{flex:1;white-space:pre;max-height:none;font-size:14px;line-height:1.5;}
 .modal.cch pre b{font-weight:800;}
+/* v3.10.3 — the copy preview now renders note markdown, so it needs to behave
+   like a document rather than a <pre>: wrap long lines, allow lists. */
+#copyText{flex:1;overflow:auto;white-space:pre-wrap;font-size:14px;line-height:1.55;
+  font-family:inherit;padding:2px 4px;}
+#copyText b,#copyText strong{font-weight:800;}
+#copyText ul{margin:4px 0 4px 20px;padding:0;}
+#copyText li{margin:2px 0;}
+#copyText del,#copyText s{opacity:.75;}
 .hidden{display:none}
 @media(max-width:880px){.stats,.tcards{grid-template-columns:repeat(2,1fr)}.app{flex-direction:column}.sidebar{width:100%;height:auto;position:static}}
 /* =====================================================================
@@ -328,7 +352,7 @@ body.bellwin .bellwin-word{font-size:12px;font-style:italic;min-height:1.2em;}
 <body>
 
 <div class="appbar">
-  <div class="brand"><img class="brand-icon" alt="PJT" src="data:image/png;base64,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" /><span>Project Journal &amp; Timecard<small>Project journal + timecard, team-synced · v3.10.1</small></span></div>
+  <div class="brand"><img class="brand-icon" alt="PJT" src="data:image/png;base64,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" /><span>Project Journal &amp; Timecard<small>Project journal + timecard, team-synced · v3.11.0</small></span></div>
   <div class="maintabs">
     <div class="maintab active" data-m="journal" onclick="switchMain('journal')">Project Journal</div>
     <div class="maintab" data-m="timecard" onclick="switchMain('timecard')">Time Card</div>
@@ -341,6 +365,10 @@ body.bellwin .bellwin-word{font-size:12px;font-style:italic;min-height:1.2em;}
   <div class="gear-wrap">
     <button class="ghost small gear-btn" onclick="toggleGearMenu(event)" title="Menu" aria-label="Menu">⚙</button>
     <div class="gear-menu" id="gearMenu">
+      <input id="gearFind" class="search" placeholder="Find a setting or help topic"
+        style="width:100%;margin:2px 0 6px;font-size:13px" oninput="gearFilter(this.value)"
+        onclick="event.stopPropagation()" />
+      <div id="gearNoHit" class="sync-note" style="display:none;padding:6px 12px">No match.</div>
       <button onclick="gearGo(openSettings)">☁&nbsp; Cloud Sync…</button>
       <button onclick="gearGo(openStorageSettings)">🗄&nbsp; Local storage &amp; backups</button>
       <button onclick="gearGo(function(){openGuide()})">❔&nbsp; Guide</button>
@@ -389,7 +417,7 @@ body.bellwin .bellwin-word{font-size:12px;font-style:italic;min-height:1.2em;}
       <div>Created: <span id="createdDate">--</span> &nbsp;&nbsp; Modified: <span id="modifiedDate">--</span></div>
     </div>
     <div class="title-row">
-      <h1 class="project-title" id="projectTitle">New Project</h1>
+      <h1 class="project-title" id="projectTitle"><span class="proj-title-dot" id="projTitleDot" style="display:none"></span><span id="projTitleText">New Project</span></h1>
       <span class="health none" id="healthBadge">No Budget Set</span>
     </div>
     <div class="clientcode-row">
@@ -408,6 +436,8 @@ body.bellwin .bellwin-word{font-size:12px;font-style:italic;min-height:1.2em;}
       </label>
       <span class="muted" id="clientCodeHint"></span>
     </div>
+    <div class="pcolor-row"><span class="muted" style="font-size:12px">Colour</span>
+      <span id="pcolorRow" style="display:flex;gap:7px;flex-wrap:wrap"></span></div>
     <div style="margin-bottom:16px">
       <button class="ghost small" id="notesToggle" onclick="toggleProjectNotes()">📝 Project Notes ▸</button>
       <div id="projectNotesPanel" class="hidden" style="margin-top:10px">
@@ -663,7 +693,7 @@ body.bellwin .bellwin-word{font-size:12px;font-style:italic;min-height:1.2em;}
 <div class="modal-bg" id="copyModalBg"><div class="modal cch">
   <h2 id="copyTitle" style="margin-top:0">Daily Summary</h2>
   <p class="muted" style="margin-top:0">Read this off your second screen while keying into Axcess.</p>
-  <pre id="copyText"></pre>
+  <div id="copyText"></div>
   <div class="modal-actions">
     <button class="ghost" onclick="closeModal('copyModalBg')">Close</button>
     <button onclick="doCopy()">Copy to Clipboard</button>
@@ -801,6 +831,25 @@ body.bellwin .bellwin-word{font-size:12px;font-style:italic;min-height:1.2em;}
   <div id="guideHostModal" class="gd-wrap gd-modal"></div>
 </div></div>
 
+<div class="modal-bg" id="shortcutsBg"><div class="modal">
+  <h2 style="margin-top:0">Keyboard shortcuts</h2>
+  <table style="width:100%;font-size:13px;line-height:2">
+    <tr><td><code>Ctrl</code>+<code>1</code> / <code>2</code> / <code>3</code></td><td>Project Journal / Time Card / Daily W.I.N.</td></tr>
+    <tr><td><code>Ctrl</code>+<code>K</code></td><td>Jump to search (opens the guide from other tabs)</td></tr>
+    <tr><td><code>Ctrl</code>+<code>S</code></td><td>Save now</td></tr>
+    <tr><td><code>G</code></td><td>Open the guide</td></tr>
+    <tr><td><code>T</code></td><td>Start or pause the focus timer</td></tr>
+    <tr><td><code>?</code></td><td>This list</td></tr>
+    <tr><td><code>Esc</code></td><td>Close a dialog, or put the scratch sheet away</td></tr>
+    <tr><td><code>Shift</code>+arrows</td><td>Select a block of scratch-sheet cells</td></tr>
+    <tr><td><code>Ctrl</code>+<code>C</code></td><td>Copy the selected cells (pastes into Excel as cells)</td></tr>
+    <tr><td><code>Ctrl</code>+<code>B</code> / <code>I</code></td><td>Bold / italic, inside a note</td></tr>
+  </table>
+  <p class="sync-note">Single-letter shortcuts are ignored while you're typing in a field, so they
+    never interrupt a note.</p>
+  <div style="text-align:right;margin-top:10px"><button class="small" onclick="closeModal('shortcutsBg')">Close</button></div>
+</div></div>
+
 <div class="modal-bg" id="aiPacketBg"><div class="modal wide" style="max-width:760px">
   <h2 style="margin-top:0">Prepare AI help packet</h2>
   <p class="sync-note" style="font-size:13px;line-height:1.7">This is the exact text that will be
@@ -822,11 +871,11 @@ body.bellwin .bellwin-word{font-size:12px;font-style:italic;min-height:1.2em;}
 <details class="sync-row" data-g="start" data-k="about"><summary style="cursor:pointer;font-weight:600;font-size:14px">About this app</summary><div class="sync-note" style="font-size:13px;line-height:1.7;margin-top:8px">PJT is <strong>one HTML file</strong> in a small native shell. That is the whole architecture, and most of what follows is a consequence of it.<br><br>Three tabs across the top: <strong>Project Journal</strong> (workpaper sections, budgets, notes, open items), <strong>Time Card</strong> (log your day, roll hours into project sections), and <strong>Daily W.I.N.</strong> (a short "What's Important Now" list). Two pocket tools live in the header &mdash; a <strong>&#9638; scratch sheet</strong> and a <strong>&#128276; focus timer</strong>.<br><br>Everything saves as you go; the dot at top right reads <strong>Saved</strong> after each change. Nothing leaves your machine unless you deliberately turn on cloud sync.<br><br>Being one file makes it hard to truly break. If a build ever misbehaves, an older installer opens the very same data.</div></details>
 <details class="sync-row" data-g="start" data-k="install"><summary style="cursor:pointer;font-weight:600;font-size:14px">Installing</summary><div class="sync-note" style="font-size:13px;line-height:1.7;margin-top:8px">Downloads are on the project's GitHub <strong>Releases</strong> page: a <code>.exe</code> for Windows and a <code>.dmg</code> for Apple Silicon Macs.<br><br>The installers are <strong>unsigned</strong>, so both operating systems will ask you to confirm before running one. A signing certificate is a yearly cost and this is a free tool. The prompt means the publisher could not be verified automatically; it is not the result of any check finding a problem with the file.<br><br><strong>Windows.</strong> If a blue box appears, click <strong>More info</strong>, then <strong>Run anyway</strong>.<br><br><strong>macOS.</strong> If the app does not open on a double-click, right-click it in Applications and choose <strong>Open</strong>, which offers the option to continue. macOS describes unsigned apps as "damaged", which refers to the missing signature rather than to the file itself. If that route does not work, open Terminal and run <code>xattr -dr com.apple.quarantine "/Applications/Project Journal &amp; Timecard.app"</code>, then open the app normally.<br><br>If unsigned software is not permitted at your firm, the whole app is one readable file (<code>src/index.html</code>) and you can build it yourself from source.<br><br>Installing over an existing copy is safe. Your data is stored separately and survives upgrades and uninstalls.</div></details>
 <details class="sync-row" data-g="start" data-k="quickstart"><summary style="cursor:pointer;font-weight:600;font-size:14px">Quick start</summary><div class="sync-note" style="font-size:13px;line-height:1.7;margin-top:8px">Five minutes, and you can skip steps 4 and 5 indefinitely.<br><br><strong>1.</strong> The <strong>&#9733; ACME Co &mdash; Example</strong> project is invented sample data. Poke at it; you can't hurt anything.<br><strong>2.</strong> Click the three tabs to see the shape of things.<br><strong>3.</strong> When you're ready for real work: select the ACME example, <strong>Delete Project</strong>, then <strong>New Project</strong> for your own.<br><strong>4.</strong> Optional &mdash; set up cloud sync. Skip it and the app still saves locally and backs itself up.<br><strong>5.</strong> Optional &mdash; turn on a passphrase to protect the file on disk.</div></details>
-<details class="sync-row" data-g="use" data-k="journal"><summary style="cursor:pointer;font-weight:600;font-size:14px">Project Journal</summary><div class="sync-note" style="font-size:13px;line-height:1.7;margin-top:8px"><strong>Creating projects.</strong> <em>New Project</em> offers the built-in <strong>Audit Template</strong>, a <strong>Blank Project</strong>, or any <strong>section template you've saved</strong>. A project has a name, an optional <strong>Time-card client code</strong> that links it to your time card, a role (Preparer / Reviewer / Both), and free-form <strong>Project Notes</strong>.<br><br><strong>Sections.</strong> Each row is a workpaper section with a <strong>Status</strong> (In Prep &rarr; Tech Review &rarr; Review Comments &rarr; Complete), <strong>Budget</strong>, <strong>Actual</strong>, automatic <strong>Variance</strong>, <strong>Preparer Notes</strong>, <strong>Reviewer Notes</strong>, and <strong>Open Items</strong>. Expand any note for a larger editor, or press Copy to lift its text.<br><br><strong>Stat cards</strong> across the top total the project live: budget, actual, variance, sections complete, open items.<br><br><strong>Project actions</strong> sit in the left panel &mdash; <em>Rename</em>, <em>Duplicate Project</em>, <em>Copy to New Year</em> (a fresh copy with actuals cleared), <em>Add Custom Section</em>, <em>Section Templates&hellip;</em>, <em>Delete Project</em>, and an <em>Archived</em> toggle that hides finished work from the pickers without deleting it.<br><br><strong>Getting things out.</strong> <em>Export Project Markdown</em> produces a clean text summary. <em>Copy Open Items</em> grabs just the open items, which is the one you'll use most &mdash; it drops straight into a status email. <em>Search sections, notes&hellip;</em> filters within the open project.</div></details>
+<details class="sync-row" data-g="use" data-k="journal"><summary style="cursor:pointer;font-weight:600;font-size:14px">Project Journal</summary><div class="sync-note" style="font-size:13px;line-height:1.7;margin-top:8px"><strong>Creating projects.</strong> <em>New Project</em> offers the built-in <strong>Audit Template</strong>, a <strong>Blank Project</strong>, or any <strong>section template you've saved</strong>. A project has a name, an optional <strong>Time-card client code</strong> that links it to your time card, a role (Preparer / Reviewer / Both), and free-form <strong>Project Notes</strong>.<br><br><strong>Sections.</strong> Each row is a workpaper section with a <strong>Status</strong> (In Prep &rarr; Tech Review &rarr; Review Comments &rarr; Complete), <strong>Budget</strong>, <strong>Actual</strong>, automatic <strong>Variance</strong>, <strong>Preparer Notes</strong>, <strong>Reviewer Notes</strong>, and <strong>Open Items</strong>. Expand any note for a larger editor, or press Copy to lift its text.<br><br><strong>Stat cards</strong> across the top total the project live: budget, actual, variance, sections complete, open items.<br><br><strong>Project actions</strong> sit in the left panel &mdash; <em>Rename</em>, <em>Duplicate Project</em>, <em>Copy to New Year</em> (a fresh copy with actuals cleared), <em>Add Custom Section</em>, <em>Section Templates&hellip;</em>, <em>Delete Project</em>, and an <em>Archived</em> toggle that hides finished work from the pickers without deleting it.<br><br><strong>Getting things out.</strong> <em>Export Project Markdown</em> produces a clean text summary. <em>Copy Open Items</em> grabs just the open items, which is the one you'll use most &mdash; the preview shows your bold, italic and red exactly as you wrote them, and pasting into Word or Outlook keeps the formatting. <em>Search sections, notes&hellip;</em> filters within the open project.</div></details>
 <details class="sync-row" data-g="use" data-k="timecard"><summary style="cursor:pointer;font-weight:600;font-size:14px">Time Card</summary><div class="sync-note" style="font-size:13px;line-height:1.7;margin-top:8px"><strong>The one rule:</strong> set only the <strong>code</strong> and the <strong>stop</strong> time. Each block starts where the previous one stopped, so the day is a chain and you never type a start time at all.<br><br><strong>Reordering.</strong> The <strong>&#9650; &#9660;</strong> buttons move a block. Because starts come from position, every time and duration recalculates itself. Nothing to re-enter.<br><br><strong>Codes.</strong> Each day carries its own code list &mdash; a letter, a client or description, and a type (billable, non-billable, unpaid). <em>Carry codes forward</em> copies yesterday's. A code linked to a journal section shows that section beside it in the dropdown.<br><br><strong>Journal sync.</strong> Hours on a code linked to a project section roll into that section's <em>Actual</em> automatically. Always on, no button to remember. Re-syncing a day replaces that day's contribution rather than adding to it, so it cannot double-count.<br><br><strong>Month Report</strong> totals by client and type for the month and gives you a copyable summary. Click any row to see its entry notes alongside the linked journal notes.<br><br><strong>The &#128276; on a row</strong> starts the focus timer for that block, already set to the right length.</div></details>
 <details class="sync-row" data-g="use" data-k="win"><summary style="cursor:pointer;font-weight:600;font-size:14px">Daily W.I.N.</summary><div class="sync-note" style="font-size:13px;line-height:1.7;margin-top:8px">A short "What's Important Now" list for each day &mdash; the handful of things that actually matter today, with a progress count.<br><br>It is deliberately small. This is a focus list, not a task manager, and it stops being useful at about the point it stops fitting on one screen.</div></details>
 <details class="sync-row" data-g="use" data-k="formatting"><summary style="cursor:pointer;font-weight:600;font-size:14px">Formatting notes</summary><div class="sync-note" style="font-size:13px;line-height:1.7;margin-top:8px">Every note field is a rich-text box. Select text and press <strong>Ctrl+B</strong> or <strong>Ctrl+I</strong>, or open the note with <em>Expand &#8599;</em> for the full toolbar: bold, italic, strikethrough, a red swatch, a back-to-default swatch, and bullets. A button <strong>fills in</strong> when its effect is active where your cursor is.<br><br>Formatting is stored as Markdown behind the scenes, which is why exported and copied text stays readable anywhere, and why red survives the trip into Word or Outlook. Pasting from another app keeps your text and drops its formatting, which is almost always what you wanted.<br><br>The expanded editor <strong>saves as you type</strong>. Close it however you like &mdash; the Close button, Escape, clicking outside &mdash; and your edit is kept.</div></details>
-<details class="sync-row" data-g="use" data-k="scratch"><summary style="cursor:pointer;font-weight:600;font-size:14px">&#9638; Scratch sheet</summary><div class="sync-note" style="font-size:13px;line-height:1.7;margin-top:8px">The <strong>&#9638;</strong> button in the header opens a small spreadsheet over whatever you're doing, for the arithmetic you'd otherwise scribble on a sticky note. Eight columns (A&ndash;H) by 25 rows.<br><br><strong>Formulas</strong> start with <code>=</code> and handle <code>+ - * /</code>, parentheses, and <code>SUM</code>, <code>AVG</code>, <code>MIN</code>, <code>MAX</code> over ranges like <code>=SUM(A1:A9)</code>. Blank cells and text count as zero, the way a napkin would.<br><br><strong>Building formulas by pointing.</strong> After typing <code>=</code>, press <strong>&uarr;</strong> or <strong>&darr;</strong> and the arrows steer a cell reference instead of moving you out of the cell; the referenced cell lights up. Type an operator and the next arrow starts a fresh reference. So <code>=</code> &uarr; <code>+</code> &uarr; &uarr; adds the two cells above. Clicking a cell mid-formula does the same thing.<br><br>Errors show as <code>#DIV0</code>, <code>#CYCLE</code>, <code>#REF</code> or <code>#ERR</code>. Your typed text is never eaten, so you can always see what you meant and fix it.<br><br><strong>It is temporary on purpose.</strong> The scratch sheet is not saved with your journal, never syncs, and clears when you close the app. It is a napkin, not a workpaper. Anything worth keeping should be moved into a note.</div></details>
+<details class="sync-row" data-g="use" data-k="scratch"><summary style="cursor:pointer;font-weight:600;font-size:14px">&#9638; Scratch sheet</summary><div class="sync-note" style="font-size:13px;line-height:1.7;margin-top:8px">The <strong>&#9638;</strong> button in the header opens a small spreadsheet over whatever you're doing, for the arithmetic you'd otherwise scribble on a sticky note. Eight columns (A&ndash;H) by 25 rows.<br><br><strong>Formulas</strong> start with <code>=</code> and handle <code>+ - * /</code>, parentheses, and <code>SUM</code>, <code>AVG</code>, <code>MIN</code>, <code>MAX</code> over ranges like <code>=SUM(A1:A9)</code>. Blank cells and text count as zero, the way a napkin would.<br><br><strong>Building formulas by pointing.</strong> After typing <code>=</code>, press <strong>&uarr;</strong> or <strong>&darr;</strong> and the arrows steer a cell reference instead of moving you out of the cell; the referenced cell lights up. Type an operator and the next arrow starts a fresh reference. So <code>=</code> &uarr; <code>+</code> &uarr; &uarr; adds the two cells above. Clicking a cell mid-formula does the same thing.<br><br>Errors show as <code>#DIV0</code>, <code>#CYCLE</code>, <code>#REF</code> or <code>#ERR</code>. Your typed text is never eaten, so you can always see what you meant and fix it.<br><br><strong>Moving numbers to Excel.</strong> Drag across cells, or hold <strong>Shift</strong> and use the arrow keys, to select a block; <strong>Ctrl+A</strong> takes the whole sheet. <strong>Ctrl+C</strong> copies it in the format Excel, Google Sheets and Numbers expect, so it pastes in as real cells rather than one lump of text. Formulas are copied as their <em>results</em> &mdash; PJT's formula names are close to Excel's but not identical, and a formula that silently meant something different in the other program would be worse than a number. Pasting a block of cells the other way, from a spreadsheet into the sheet, works too.<br><br><strong>It is temporary on purpose.</strong> The scratch sheet is not saved with your journal, never syncs, and clears when you close the app. It is a napkin, not a workpaper. Anything worth keeping should be moved into a note.</div></details>
 <details class="sync-row" data-g="use" data-k="timer"><summary style="cursor:pointer;font-weight:600;font-size:14px">&#128276; Focus timer</summary><div class="sync-note" style="font-size:13px;line-height:1.7;margin-top:8px">A countdown for working in blocks. Set the minutes and press <strong>Start</strong>, or press the <strong>&#128276;</strong> on a time-log row to time that particular block. The grid drains as time passes, which is easier to read at a glance than digits.<br><br><strong>Pop out &#8599;</strong> floats the timer in its own small always-on-top window so it stays visible while you work in another app. Both windows stay in step, and either one can start, pause, or reset.<br><br><strong>Sound</strong> is off by default. Turned on, it rings <em>once</em> when time is up. Never repeatedly, never again thirty seconds later.<br><br>The timer keeps no history and stores nothing at all.</div></details>
 <details class="sync-row" data-g="yours" data-k="custom"><summary style="cursor:pointer;font-weight:600;font-size:14px">Custom sections &amp; templates</summary><div class="sync-note" style="font-size:13px;line-height:1.7;margin-top:8px">The built-in Audit Template reflects one firm's workpaper set. Most audit practices are close to it, and yours will differ somewhere &mdash; so nothing about it is fixed.<br><br><strong>Adjust one project:</strong> <em>Add Custom Section</em> adds a row, and sections can be renamed or deleted freely.<br><br><strong>Reuse it everywhere:</strong> once a project's section list looks right, open <em>Section Templates&hellip;</em> and choose <strong>Save current sections as template</strong>. Name it something you'll recognise later, like "Firm Audit &mdash; 2026". It then appears in the <em>New Project</em> dropdown. You can keep up to <strong>five</strong>.<br><br><strong>A template stores section names and nothing else</strong> &mdash; no budgets, notes, hours, or client data. That is what makes templates safe to carry around in a synced journal.<br><br><strong>Grouping.</strong> Sections sort themselves into groups by their leading letter or number. Naming one <code>B - Receivables</code> files it under Assets automatically; anything unrecognised lands in Custom, which is a perfectly respectable place to be.</div></details>
 <details class="sync-row" data-g="yours" data-k="codes"><summary style="cursor:pointer;font-weight:600;font-size:14px">Section &amp; billing codes &mdash; reference</summary><div class="sync-note" style="font-size:13px;line-height:1.7;margin-top:8px">The Audit Template's sections describe themselves by prefix and sort into groups on their own.<br><br><strong>Numbered &amp; Review:</strong> 1 Permanent File &middot; 2 General File &middot; 3 Trial Balance and Reports &middot; 4 Financial Statements &middot; 5 Section 5 &middot; 7 Client Conferences &middot; T Technical Review.<br><strong>Assets:</strong> A Cash &middot; B Receivables &middot; C Notes Receivable &middot; D Inventory &middot; E Prepaids &middot; F Investments &middot; G Fixed Assets &middot; J Other Assets.<br><strong>Liabilities:</strong> M Payables &middot; N Other Current Liabilities &middot; O Notes Payable &amp; Long-Term Debt &middot; P Income Taxes.<br><strong>Equity:</strong> Q Equity.<br><strong>Income &amp; Expenses:</strong> S Leases &middot; W Work in Progress &middot; X Income &amp; Expense Accounts &middot; Y R&amp;D Credit &middot; Z Tax Workpapers.<br><br>Rename or replace any of these. They are starting points, not rules.</div></details>
@@ -837,7 +886,7 @@ body.bellwin .bellwin-word{font-size:12px;font-style:italic;min-height:1.2em;}
 <details class="sync-row" data-g="data" data-k="privacy"><summary style="cursor:pointer;font-weight:600;font-size:14px">Privacy &mdash; what to keep out of the cloud</summary><div class="sync-note" style="font-size:13px;line-height:1.7;margin-top:8px">This matters more in an accounting practice than in most software, so it is stated plainly rather than buried.<br><br><strong>If you never turn on cloud sync, none of this applies.</strong> Your data never leaves your machine.<br><br>If you do turn it on: <strong>what you sync is stored as readable JSON in your GitHub gist.</strong> A secret gist is unlisted, not private &mdash; the protection comes from the URL and the token staying secret. In practice it can be read by anyone with your Team code, anyone who gets into that GitHub account, and GitHub itself.<br><br><strong>So keep client-identifying detail out of anything that syncs.</strong> Section budgets, hours, statuses, and shorthand notes are fine. Client names, contact details, financial figures, and anything you wouldn't put in a personal email are not.<br><br>The <em>Time-card client code</em> is a useful habit here: a short code like <code>ACME R</code> carries the meaning for you without spelling anything out for anyone else.<br><br>Whether this arrangement is acceptable at all is a professional judgement for your firm, not a technical one. If in doubt, ask whoever owns confidentiality policy &mdash; or simply don't enable sync. The app is fully functional without it.</div></details>
 <details class="sync-row" data-g="help" data-k="faq"><summary style="cursor:pointer;font-weight:600;font-size:14px">FAQ &amp; troubleshooting</summary><div class="sync-note" style="font-size:13px;line-height:1.7;margin-top:8px"><strong>Windows says the installer is unrecognised.</strong> Expected &mdash; it's unsigned. <em>More info</em> &rarr; <em>Run anyway</em>.<br><br><strong>macOS says the app is damaged.</strong> Also expected, and also just the unsigned-app message. Right-click the app &rarr; <strong>Open</strong>. See <em>Installing</em> for the Terminal fallback.<br><br><strong>My data vanished.</strong> Almost always the wrong place rather than lost data. In a browser, check you're in the same profile. In the desktop app, check &#9881; &rarr; <em>Local storage</em> for the path, and look in the <code>backups</code> folder beside it.<br><br><strong>Sync says it can't connect.</strong> Usually an expired or wrongly-scoped token. Regenerate it with the <code>gist</code> scope ticked and reconnect through the admin box.<br><br><strong>A teammate can't see my journal.</strong> They need the Team code <em>and</em> their own Journal ID, then <em>Join an existing journal</em>.<br><br><strong>I forgot my passphrase.</strong> Use the Recovery Key. Without both, nobody can recover the data &mdash; not you, not the author.<br><br><strong>Hours aren't reaching a section.</strong> The time-card code has to be linked to that project section, and the project needs a matching client code.<br><br><strong>The scratch sheet emptied.</strong> By design; it never persists. Move anything worth keeping into a note.<br><br><strong>The timer popout stopped responding.</strong> Close it and pop it out again. Both windows can drive the timer, so the main window's controls keep working regardless.<br><br><strong>Something looks broken after an update.</strong> Export a backup, then install the previous version. Your data file is unchanged and older builds read it quite happily.</div></details>
 <details class="sync-row" data-g="help" data-k="aihelp"><summary style="cursor:pointer;font-weight:600;font-size:14px">Get AI help</summary><div class="sync-note" style="font-size:13px;line-height:1.7;margin-top:8px">If something is wrong and nothing above covers it, PJT can write a summary of itself that you can paste into ChatGPT, Claude, Gemini, or any other AI assistant. Because the whole app is one file with no server, the context needed to troubleshoot it is small enough to hand over in a single message.<br><br><button class="small" onclick="aiPacketOpen()" style="margin:4px 0">Prepare AI help packet</button><br><br>The packet describes what PJT is, how it stores data, which version and platform you are running, and the failure modes that are already known. It ends by asking the assistant to check with you before suggesting anything that deletes or overwrites data.<br><br><strong style="color:#c00">On confidentiality.</strong> The packet contains <strong>counts only</strong> &mdash; how many projects, how many sections, whether sync is on. It never includes project names, client codes, note text, hours, your Team code, or your token. Those fields are not filtered out; they are never read in the first place.<br><br>You will see the exact text before anything is copied. Read it. You are the one bound by a confidentiality obligation, and a chat assistant is a third party like any other &mdash; if your firm has a policy on AI tools, it applies here too.</div></details>
-<details class="sync-row" data-g="help" data-k="dev"><summary style="cursor:pointer;font-weight:600;font-size:14px">For developers &amp; maintainers</summary><div class="sync-note" style="font-size:13px;line-height:1.7;margin-top:8px">PJT is open source under the <strong>MIT licence</strong> &mdash; use it, change it, ship it, at no cost and with no warranty. The whole app is <code>src/index.html</code>: HTML, CSS and JavaScript in one file, no build step, no framework, no dependencies. Open it in a browser and it runs.<br><br><strong>Building the desktop apps.</strong> The repo wraps that file with <strong>Tauri 2</strong> and builds on GitHub Actions &mdash; an NSIS <code>.exe</code> on a Windows runner and a <code>.dmg</code> on an Apple Silicon runner, in one matrix, with no local toolchain. Push to <code>main</code> to get artifacts; push a <code>v*</code> tag to get a draft Release with both installers attached. Bump <code>version</code> in <code>tauri.conf.json</code>, and note it must be strict semver &mdash; <code>3.10.0</code>, never <code>3.10</code>.<br><br>MSI is deliberately absent: WiX's <code>candle.exe</code> chokes on the ampersand in the app name. NSIS is the stable Windows target.<br><br><strong>Storage</strong> uses <code>tauri-plugin-fs</code>, scoped by a capability file to the app's own data folder, so nothing else on disk is reachable. It is feature-detected, so the same file still works in a plain browser.<br><br><strong>Encryption</strong> is Web Crypto (AES-GCM + PBKDF2), no libraries: a passphrase-derived key wraps a random data key, and a Recovery Key wraps the same data key.<br><br><strong>Cloud sync</strong> is one gist holding one JSON file per person, reached with a runtime Team code. <strong>No credential is ever committed or shipped</strong>, which is why the repo can be public. Synced content is currently plaintext; encrypting it needs a shared key, and the Team code is the natural place to carry one.<br><br><strong>Design constraints worth preserving:</strong> no servers, no third-party data services, no telemetry, no accounts, one portable file, minimal toolchain. Anything that would stop the app working offline, or start it reporting home, is against the grain of the thing.</div></details>
+<details class="sync-row" data-g="help" data-k="dev"><summary style="cursor:pointer;font-weight:600;font-size:14px">For developers &amp; maintainers</summary><div class="sync-note" style="font-size:13px;line-height:1.7;margin-top:8px">PJT is open source under the <strong>MIT licence</strong> &mdash; use it, change it, ship it, at no cost and with no warranty. The whole app is <code>src/index.html</code>: HTML, CSS and JavaScript in one file, no build step, no framework, no dependencies. Open it in a browser and it runs.<br><br><strong>Building the desktop apps.</strong> The repo wraps that file with <strong>Tauri 2</strong> and builds on GitHub Actions &mdash; an NSIS <code>.exe</code> on a Windows runner and a <code>.dmg</code> on an Apple Silicon runner, in one matrix, with no local toolchain. Push to <code>main</code> to get artifacts; push a <code>v*</code> tag to get a draft Release with both installers attached. Bump <code>version</code> in <code>tauri.conf.json</code>, and note it must be strict semver &mdash; <code>3.10.0</code>, never <code>3.10</code>.<br><br>MSI is deliberately absent: WiX's <code>candle.exe</code> chokes on the ampersand in the app name. NSIS is the stable Windows target.<br><br><strong>Storage</strong> uses <code>tauri-plugin-fs</code>, scoped by a capability file to the app's own data folder, so nothing else on disk is reachable. It is feature-detected, so the same file still works in a plain browser.<br><br><strong>Encryption</strong> is Web Crypto (AES-GCM + PBKDF2), no libraries: a passphrase-derived key wraps a random data key, and a Recovery Key wraps the same data key.<br><br><strong>Cloud sync</strong> is one gist holding one JSON file per person, reached with a runtime Team code. <strong>No credential is ever committed or shipped</strong>, which is why the repo can be public. Synced content is stored as plaintext JSON, which is why the Privacy section asks you to keep client-identifying detail out of anything that syncs.<br><br><strong>Design constraints worth preserving:</strong> no servers, no third-party data services, no telemetry, no accounts, one portable file, minimal toolchain. Anything that would stop the app working offline, or start it reporting home, is against the grain of the thing.</div></details>
 </div>
 
 <div class="modal-bg" id="conflictModalBg"><div class="modal">
@@ -863,7 +912,7 @@ body.bellwin .bellwin-word{font-size:12px;font-style:italic;min-height:1.2em;}
   <div class="scratch-panel">
     <div class="scratch-head">
       <h3>▦ Scratch sheet</h3>
-      <span class="muted">=A1*B2 &nbsp;·&nbsp; SUM · AVG · MIN · MAX (A1:A9) — numbers you don't have to hold in your head</span>
+      <span class="muted" id="scHint">=A1*B2 &nbsp;·&nbsp; SUM · AVG · MIN · MAX (A1:A9) &nbsp;·&nbsp; drag or Shift+arrows to select, Ctrl+C to copy into Excel</span>
       <span style="flex:1"></span>
       <span class="muted" title="This sheet is a napkin: it is never saved to your journal and never syncs to the team.">napkin — not saved, not synced</span>
       <button class="ghost small" onclick="scratchClear(this)">Clear sheet</button>
@@ -878,7 +927,7 @@ body.bellwin .bellwin-word{font-size:12px;font-style:italic;min-height:1.2em;}
 
 <script>
 /* =====================================================================
-   Project Journal & Timecard (PJT) v3.10.1 — Project Journal + Time Card, one file.
+   Project Journal & Timecard (PJT) v3.11.0 — Project Journal + Time Card, one file.
    Single shared db, single localStorage key 'projtime_v8', JSON backups.
    Desktop (Tauri) build adds a durable on-disk copy + rolling daily backups,
    and optional passphrase encryption at rest (AES-GCM via Web Crypto). Both
@@ -902,7 +951,7 @@ function openModal(id){ const el=document.getElementById(id); if(!el) return; el
 function closeModal(id){ const el=document.getElementById(id); if(!el) return; el.classList.remove('open'); el.style.zIndex=''; updateModalLock(); }
 function toggleGearMenu(e){ if(e) e.stopPropagation(); document.getElementById('gearMenu').classList.toggle('open'); }
 function closeGearMenu(){ const m=document.getElementById('gearMenu'); if(m) m.classList.remove('open'); }
-function gearGo(fn){ closeGearMenu(); fn(); }
+function gearGo(fn){ gearSearchReset(); closeGearMenu(); fn(); }
 let flashT=null;
 function flash(msg){ const t=document.getElementById('saveStatus'); t.textContent=msg; clearTimeout(flashT); flashT=setTimeout(()=>t.textContent='Saved',1400); }
 
@@ -1171,7 +1220,13 @@ function persistLocal(){
     const snap=JSON.stringify(db);
     _persistChain=_persistChain.then(async ()=>{ try{ localStorage.setItem('projtime_v8', await encEncrypt(snap)); }catch(e){ console.error('enc persist',e); } });
   } else {
-    try{ localStorage.setItem('projtime_v8', JSON.stringify(db)); }catch(e){ console.error(e); }
+    try{ localStorage.setItem('projtime_v8', JSON.stringify(db)); }
+    catch(e){ console.error(e);
+      /* A silent failure here means the header says Saved over a write that
+         never landed — usually browser quota. Say so. */
+      try{ const el=document.getElementById('saveStatus'); if(el) el.textContent='SAVE FAILED';
+           const d=document.getElementById('saveDot'); if(d) d.style.background='var(--danger)'; }catch(_){}
+    }
   }
 }
 
@@ -1434,7 +1489,10 @@ function effActual(s){ return Number(s.actual||0)+syncedTotal(s); }
 
 function renderJournal(){
   const p=currentProject(); if(!p) return;
-  document.getElementById('projectTitle').textContent=p.name;
+  document.getElementById('projTitleText').textContent=p.name;
+  const _pd=document.getElementById('projTitleDot'), _pc=projColor(p);
+  if(_pd){ _pd.style.display=_pc?'inline-block':'none'; if(_pc) _pd.style.background=_pc; }
+  renderColorPicker();
   document.getElementById('createdDate').textContent=p.createdDate||'--';
   document.getElementById('modifiedDate').textContent=p.modifiedDate||'--';
   document.getElementById('clientCodeInput').value=p.clientCode||'';
@@ -1465,13 +1523,34 @@ function openProjectNotesEditor(){ const p=currentProject(); editorCtx={scope:'p
   document.getElementById('editorTitle').textContent='Project Notes — '+p.name;
   document.getElementById('editorMeta').innerHTML='Project: '+escapeHtml(p.name)+(p.clientCode?'<br>Client code: '+escapeHtml(p.clientCode):'')+'<br>Created: '+escapeHtml(p.createdDate)+'<br>Modified: '+escapeHtml(p.modifiedDate);
   const ed=document.getElementById('bigEditor'); mdSet(ed, p.notes||''); openModal('editorModalBg'); setTimeout(()=>ed.focus(),50); }
+/* Deliberately small and fixed: eight colours that stay legible in dark mode,
+   chosen so no two read the same at a 10px dot. Free text would let people
+   pick unreadable ones. */
+const PCOLORS=[['#2563eb','Blue'],['#16a34a','Green'],['#ea580c','Orange'],['#dc2626','Red'],
+               ['#9333ea','Purple'],['#0891b2','Teal'],['#ca8a04','Gold'],['#64748b','Slate']];
+function projColor(p){ return (p&&typeof p.color==='string'&&/^#[0-9a-f]{6}$/i.test(p.color))?p.color:''; }
+function setProjColor(c){ const p=currentProject(); if(!p) return;
+  if(c) p.color=c; else delete p.color;
+  p.modifiedDate=now(); renderJournal(); save(); }
+function renderColorPicker(){
+  const wrap=document.getElementById('pcolorRow'); if(!wrap) return;
+  const p=currentProject(); const cur=projColor(p); wrap.innerHTML='';
+  const none=document.createElement('div');
+  none.className='pcolor-sw none'+(cur?'':' sel'); none.textContent='\u2715';
+  none.title='No colour'; none.onclick=()=>setProjColor('');
+  wrap.appendChild(none);
+  PCOLORS.forEach(([hex,name])=>{ const d=document.createElement('div');
+    d.className='pcolor-sw'+(cur.toLowerCase()===hex?' sel':''); d.style.background=hex;
+    d.title=name; d.onclick=()=>setProjColor(hex); wrap.appendChild(d); });
+}
 function renderProjectPicker(){
   const sel=document.getElementById('projectPicker'); sel.innerHTML='';
   const showArch=!!db.journal.showArchived;
   db.journal.projects.forEach(p=>{
     if(p.archived && !showArch && p.id!==db.journal.currentProjectId) return;
     const o=document.createElement('option'); o.value=p.id;
-    o.textContent=p.name+(p.clientCode?(' ['+p.clientCode+']'):'')+(p.archived?' · archived':'');
+    o.textContent=(projColor(p)?'\u25CF ':'')+p.name+(p.clientCode?(' ['+p.clientCode+']'):'')+(p.archived?' · archived':'');
+    if(projColor(p)) o.style.color=projColor(p);
     sel.appendChild(o); });
   sel.value=currentProject().id;
   sel.onchange=e=>{ db.journal.currentProjectId=e.target.value; renderJournal(); save(); };
@@ -1482,6 +1561,7 @@ function renderRecent(){
   [...db.journal.projects].filter(p=>showArch || !p.archived || p.id===db.journal.currentProjectId)
     .sort((a,b)=>new Date(b.modifiedDate)-new Date(a.modifiedDate)).slice(0,5).forEach(p=>{
     const d=document.createElement('div'); d.className='recent-project'+(p.id===currentProject().id?' active':'');
+    const pc=projColor(p); if(pc) d.style.borderLeftColor=pc;
     d.innerHTML='<strong></strong><br><small class="muted"></small>';
     d.querySelector('strong').textContent=p.name+(p.archived?' · archived':''); d.querySelector('small').textContent=p.modifiedDate||'';
     d.onclick=()=>{ db.journal.currentProjectId=p.id; renderJournal(); save(); }; wrap.appendChild(d);
@@ -1666,7 +1746,7 @@ function copyOpenItems(){ const p=currentProject();
   const plain=[p.name+' — Open Items',''], html=['<b>'+escapeHtml(p.name)+' — Open Items</b>',''];
   let any=false;
   buildGroups(p.sections).forEach(g=>g.rows.forEach(r=>{ const s=r.s; const t=(s.scratch||'').trim(); if(!t) return; any=true;
-    plain.push(s.name+':', t, ''); html.push('<b>'+escapeHtml(s.name)+':</b>', escapeHtml(t).replace(/\n/g,'<br>'), ''); }));
+    plain.push(s.name+':', mdPlain(t), ''); html.push('<b>'+escapeHtml(s.name)+':</b>', mdPreview(t), ''); }));
   if(!any){ plain.push('(No open items recorded.)'); html.push('(No open items recorded.)'); }
   showCopy('Open Items — '+p.name, plain.join('\n'), html.join('\n')); }
 
@@ -2057,7 +2137,17 @@ function renderReport(){
 }
 
 /* ---- copy helpers ---- */
-let copyBuffer='';
+let copyBuffer='', copyBufferHtml='';
+/* v3.10.3 — notes are STORED as markdown, so the copy previews were running
+   escapeHtml over "**bold**" and showing the asterisks. Render them instead.
+   mdToHtml is the same renderer the note fields use, so the preview matches
+   what you see while editing. */
+function mdPreview(t){ try{ return mdToHtml(t||''); }
+  catch(_){ return escapeHtml(t||'').replace(/\n/g,'<br>'); } }
+/* Plain-text flavour: strip the markup rather than paste raw asterisks. */
+function mdPlain(t){ try{ const d=document.createElement('div'); d.innerHTML=mdToHtml(t||'');
+    return (d.textContent||'').replace(/\u00a0/g,' ').trim(); }
+  catch(_){ return (t||'').trim(); } }
 function notesForCode(day,letter){ const seen=new Set(),out=[];
   day.entries.forEach(en=>{ if(en.code===letter){ const d=(en.desc||'').trim(); if(d && !seen.has(d)){ seen.add(d); out.push(d); } } }); return out; }
 // Aggregate every time-entry note for one billing code across the selected month,
@@ -2090,8 +2180,8 @@ function codeBreakdown(label,type){
       let any=false;
       [['Preparer Notes',s.preparer],['Reviewer Notes',s.reviewer],['Open Items',s.scratch]].forEach(([t,v])=>{
         v=(v||'').trim(); if(!v) return; any=true;
-        plain.push(t+':','  '+v.replace(/\n/g,'\n  '));
-        html.push('<b>'+escapeHtml(t)+':</b>',escapeHtml(v).replace(/\n/g,'<br>')); });
+        plain.push(t+':','  '+mdPlain(v).replace(/\n/g,'\n  '));
+        html.push('<b>'+escapeHtml(t)+':</b>',mdPreview(v)); });
       if(!any){ plain.push('  (no journal notes on this section yet)'); html.push('  (no journal notes on this section yet)'); }
     });
   } else { plain.push('','(this code isn\'t linked to a journal section)'); html.push('','<span class="muted">(this code isn\'t linked to a journal section)</span>'); }
@@ -2118,9 +2208,39 @@ function copyReport(){
   lines.push('', 'Billable '+fmtH(totals.billable)+' · Non-billable '+fmtH(totals.nonbillable)
     +' · Unpaid '+fmtH(totals.unpaid)+' · '+dayCount+'d');
   showCopy('Month Report ('+ym+')', lines.join('\n')); }
-function showCopy(title,text,html){ copyBuffer=text; document.getElementById('copyTitle').textContent=title;
+function showCopy(title,text,html){ copyBuffer=text; copyBufferHtml=(html!=null?html:'');
+  document.getElementById('copyTitle').textContent=title;
   const pre=document.getElementById('copyText'); if(html!=null) pre.innerHTML=html; else pre.textContent=text; openModal('copyModalBg'); }
-function doCopy(){ copyText(copyBuffer); }
+function doCopy(){ if(copyBufferHtml) copyRich(copyBufferHtml, copyBuffer); else copyText(copyBuffer); }
+/* Rich copy: put BOTH text/html and text/plain on the clipboard so Outlook and
+   Word keep the bold and the red, while a plain-text target still gets clean
+   text. Falls back to selecting a live node (which carries formatting through
+   execCommand) and finally to plain text. */
+function copyRich(html, plain){
+  const wrapped='<div style="font-family:Segoe UI,Arial,sans-serif;font-size:14px">'+html+'</div>';
+  if(window.ClipboardItem && navigator.clipboard && navigator.clipboard.write){
+    try{
+      const item=new ClipboardItem({
+        'text/html': new Blob([wrapped],{type:'text/html'}),
+        'text/plain': new Blob([plain||''],{type:'text/plain'})});
+      navigator.clipboard.write([item]).then(()=>flash('Copied')).catch(()=>copyRichFallback(wrapped,plain));
+      return;
+    }catch(_){}
+  }
+  copyRichFallback(wrapped, plain);
+}
+function copyRichFallback(html, plain){
+  const host=document.createElement('div');
+  host.setAttribute('contenteditable','true');
+  host.style.cssText='position:fixed;left:-10000px;top:0;white-space:pre-wrap;';
+  host.innerHTML=html; document.body.appendChild(host);
+  let ok=false;
+  try{ const r=document.createRange(); r.selectNodeContents(host);
+    const sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+    ok=document.execCommand('copy'); sel.removeAllRanges(); }catch(_){}
+  document.body.removeChild(host);
+  if(ok) flash('Copied'); else copyText(plain||'');
+}
 function copyText(text){ if(navigator.clipboard?.writeText){ navigator.clipboard.writeText(text).then(()=>flash('Copied')).catch(()=>fbCopy(text)); } else fbCopy(text); }
 function fbCopy(text){ const ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');flash('Copied');}catch(e){} document.body.removeChild(ta); }
 
@@ -2138,7 +2258,11 @@ document.getElementById('importFile').addEventListener('change',e=>{ const f=e.t
   }catch(err){ console.error(err); alert('Import failed — not valid JSON.'); } };
   r.readAsText(f); e.target.value=''; });
 function cancelImport(){ pendingImport=null; closeModal('importModalBg'); }
-function applyImport(mode){ if(!pendingImport){ closeModal('importModalBg'); return; } const inc=pendingImport;
+async function applyImport(mode){ if(!pendingImport){ closeModal('importModalBg'); return; } const inc=pendingImport;
+  /* v3.10.2 — Replace destroys the current journal, so take a safety snapshot
+     first, exactly as restoreBackup() already does. Previously the only
+     protection was a line in the guide telling people to export by hand. */
+  if(mode==='replace' && FS_ENABLED){ try{ await backupNow(); }catch(_){ } }
   if(mode==='replace'){ if(inc.projects.length){ db.journal.projects=inc.projects; db.journal.currentProjectId=inc.projects[0].id; }
     if(Object.keys(inc.days).length){ db.timecard.days=inc.days; } }
   else { const names=new Set(db.journal.projects.map(p=>p.name)); inc.projects.forEach(p=>{ if(names.has(p.name)) p.name+=' (imported)'; db.journal.projects.push(p); });
@@ -2590,6 +2714,121 @@ let _scEls=null;              /* ref -> its input; grid DOM built once and kept 
 let _scPoint={active:false};  /* Excel-style point-to-refer state */
 let _scCur=null;              /* the ref the composition bar mirrors */
 const SC_ARROW={ArrowUp:[-1,0],ArrowDown:[1,0],ArrowLeft:[0,-1],ArrowRight:[0,1]};
+
+/* =====================================================================
+   RANGE SELECT + SPREADSHEET CLIPBOARD (v3.11.0)
+
+   Cells are individual <input>s, so there is no native notion of a range.
+   _scSel holds an anchor and a focus cell; everything else is derived.
+
+   Copy puts TSV on text/plain and a real <table> on text/html, which is
+   what Excel, Google Sheets and Numbers all read. We copy COMPUTED VALUES,
+   not formulas: our formula dialect is close to Excel's but not identical
+   (AVG vs AVERAGE), so pasting formulas across would produce silent errors
+   in the other program — the one failure mode worth designing out.
+   ===================================================================== */
+let _scSel=null;        /* {ar,ac,br,bc} 1-based row, 0-based col */
+let _scDrag=false;
+function scRef(r,c){ return SC_COLS[c]+r; }
+function scParse(ref){ const m=/^([A-H])([0-9]+)$/.exec(ref||''); 
+  return m?{r:parseInt(m[2],10), c:SC_COLS.indexOf(m[1])}:null; }
+function scSelBox(){ if(!_scSel) return null;
+  return { r0:Math.min(_scSel.ar,_scSel.br), r1:Math.max(_scSel.ar,_scSel.br),
+           c0:Math.min(_scSel.ac,_scSel.bc), c1:Math.max(_scSel.ac,_scSel.bc) }; }
+function scSelIsRange(){ const b=scSelBox(); return !!b && (b.r0!==b.r1 || b.c0!==b.c1); }
+function scSelClear(){ _scSel=null; scSelPaint(); }
+function scSelSet(ar,ac,br,bc){ _scSel={ar:ar,ac:ac,br:br,bc:bc}; scSelPaint(); }
+function scSelPaint(){
+  if(!_scEls) return;
+  const b=scSelBox();
+  Object.keys(_scEls).forEach(ref=>{
+    const td=_scEls[ref].parentElement; if(!td) return;
+    const p=scParse(ref);
+    const on=!!(b && p && p.r>=b.r0 && p.r<=b.r1 && p.c>=b.c0 && p.c<=b.c1 && scSelIsRange());
+    td.classList.toggle('sc-sel',on); });
+}
+/* Value for the clipboard. Deliberately NOT scDisplay(): that is the accounting
+   face — thousands commas and forced 2dp — and "1,234.50" lands in a spreadsheet
+   as text in any locale that doesn't group with commas. Send the underlying
+   number and let the destination format it. Text cells go across verbatim;
+   error tokens (#DIV0 etc.) go as their text so the problem is visible. */
+function scValueText(ref, visiting, memo){
+  const raw=scRaw(ref);
+  if(raw.trim()==='') return '';
+  if(raw.trim()[0]==='='){
+    try{ const n=scCellValue(ref,visiting,memo);
+      return (typeof n==='number' && isFinite(n)) ? String(n) : String(n); }
+    catch(e){ return (e&&e.err)||'#ERR'; } }
+  const n=Number(raw.replace(/,/g,''));
+  return isNaN(n) ? raw : String(n);
+}
+function scSelGrid(){
+  const b=scSelBox(); if(!b) return [[]];
+  const memo=new Map(), visiting=new Set(), rows=[];
+  for(let r=b.r0;r<=b.r1;r++){ const row=[];
+    for(let c=b.c0;c<=b.c1;c++) row.push(scValueText(scRef(r,c),visiting,memo));
+    rows.push(row); }
+  return rows;
+}
+function scCopySelection(){
+  const rows=scSelGrid(); if(!rows.length) return false;
+  /* Excel splits text/plain on tabs and newlines. Quote any cell that itself
+     contains a tab, newline or quote, or the grid would shift on paste. */
+  const q=v=>/[\t\n"]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v;
+  const tsv=rows.map(r=>r.map(q).join('\t')).join('\r\n');
+  const html='<table>'+rows.map(r=>'<tr>'+r.map(v=>'<td>'+escapeHtml(v)+'</td>').join('')+'</tr>').join('')+'</table>';
+  const n=rows.length*rows[0].length;
+  if(window.ClipboardItem && navigator.clipboard && navigator.clipboard.write){
+    try{
+      navigator.clipboard.write([new ClipboardItem({
+        'text/plain': new Blob([tsv],{type:'text/plain'}),
+        'text/html' : new Blob([html],{type:'text/html'})})])
+        .then(()=>scFlash('Copied '+n+' cell'+(n===1?'':'s')))
+        .catch(()=>{ copyRichFallback(html,tsv); });
+      return true;
+    }catch(_){}
+  }
+  copyRichFallback(html,tsv); return true;
+}
+/* Split pasted TSV, honouring quoted cells that contain tabs or newlines. */
+function scParseTSV(text){
+  const rows=[]; let row=[], cell='', i=0, inQ=false;
+  const s=String(text).replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  while(i<s.length){ const ch=s[i];
+    if(inQ){
+      if(ch==='"'){ if(s[i+1]==='"'){ cell+='"'; i+=2; continue; } inQ=false; i++; continue; }
+      cell+=ch; i++; continue; }
+    if(ch==='"' && cell===''){ inQ=true; i++; continue; }
+    if(ch==='\t'){ row.push(cell); cell=''; i++; continue; }
+    if(ch==='\n'){ row.push(cell); rows.push(row); row=[]; cell=''; i++; continue; }
+    cell+=ch; i++; }
+  row.push(cell); rows.push(row);
+  while(rows.length && rows[rows.length-1].every(v=>v==='')) rows.pop();
+  return rows;
+}
+function scPasteGrid(text, startRef){
+  const st=scParse(startRef); if(!st) return false;
+  const rows=scParseTSV(text);
+  if(rows.length===1 && rows[0].length===1) return false;   /* ordinary paste */
+  let wrote=0, clipped=false;
+  rows.forEach((row,dr)=>row.forEach((val,dc)=>{
+    const r=st.r+dr, c=st.c+dc;
+    if(r>SC_ROWS || c>=SC_COLS.length){ clipped=true; return; }
+    const ref=scRef(r,c), v=String(val).trim();
+    if(v==='') delete _scMem[ref]; else _scMem[ref]=v;
+    wrote++; }));
+  scPersist(); scRecalc();
+  const endR=Math.min(st.r+rows.length-1,SC_ROWS);
+  const endC=Math.min(st.c+rows[0].length-1,SC_COLS.length-1);
+  scSelSet(st.r,st.c,endR,endC);
+  scFlash('Pasted '+wrote+' cell'+(wrote===1?'':'s')+(clipped?' (clipped to the sheet)':''));
+  return true;
+}
+function scFlash(msg){ const el=document.getElementById('scHint');
+  if(!el){ flash(msg); return; }
+  const prev=el.dataset.base||el.textContent; el.dataset.base=prev;
+  el.textContent=msg; clearTimeout(scFlash._t);
+  scFlash._t=setTimeout(()=>{ el.textContent=el.dataset.base||''; },2200); }
 /* Excel's point mode, on the keyboard. Inside a formula, at a spot where a
    reference belongs, the arrows STEER a reference instead of leaving the cell.
    Typing an operator ends the span (the 'input' listener clears _scPoint), so
@@ -2661,12 +2900,30 @@ function scratchBuild(){
         /* Excel's rule: Escape abandons an in-progress cell edit and stays in
            the sheet. With nothing to abandon it falls through to the document
            handler, which puts the pocket tool away. */
+        if((ev.ctrlKey||ev.metaKey) && !ev.altKey){
+          const k=(ev.key||'').toLowerCase();
+          if(k==='c' && scSelIsRange()){ ev.preventDefault(); scCopySelection(); return; }
+          if(k==='a'){ ev.preventDefault(); scSelSet(1,0,SC_ROWS,SC_COLS.length-1); return; }
+        }
+        if(ev.key==='Escape' && scSelIsRange() && inp.value===scRaw(ref)){
+          ev.preventDefault(); ev.stopPropagation(); scSelClear(); return; }
         if(ev.key==='Escape'){
           if(inp.value!==scRaw(ref)){ ev.preventDefault(); ev.stopPropagation();
             inp.value=scRaw(ref); inp.select();
             const b=document.getElementById('scBarInput'); if(b) b.value=inp.value;
             scHilite(inp.value); }
           return; }
+        /* v3.11.0 — Shift+arrow grows a range from the anchor. Checked before
+           ordinary navigation, and only when not mid-formula, so point mode
+           (which also owns the arrows) is never intercepted. */
+        if(ev.shiftKey && SC_ARROW[ev.key] && inp.value[0]!=='='){
+          ev.preventDefault();
+          if(!_scSel) _scSel={ar:r,ac:ci,br:r,bc:ci};
+          const D=SC_ARROW[ev.key];
+          _scSel.br=Math.min(Math.max(_scSel.br+D[0],1),SC_ROWS);
+          _scSel.bc=Math.min(Math.max(_scSel.bc+D[1],0),SC_COLS.length-1);
+          scSelPaint(); return; }
+        if(SC_ARROW[ev.key]) scSelClear();
         if(ev.key==='ArrowDown'){ if(r<SC_ROWS) go(r+1,ci); return; }
         if(ev.key==='ArrowUp'){ if(r>1) go(r-1,ci); return; }
         /* Left/Right leave the cell only from the text's edge (or with the
@@ -2675,7 +2932,23 @@ function scratchBuild(){
         const full=(inp.selectionStart===0 && inp.selectionEnd===inp.value.length);
         if(ev.key==='ArrowLeft'  && (full || (inp.selectionStart===0 && inp.selectionEnd===0))){ if(ci>0) go(r,ci-1); return; }
         if(ev.key==='ArrowRight' && (full || (inp.selectionStart===inp.value.length && inp.selectionEnd===inp.value.length))){ if(ci<SC_COLS.length-1) go(r,ci+1); return; } });
+      /* Multi-cell paste. A single value with no tabs or newlines falls
+         through to the browser's normal input paste. */
+      inp.addEventListener('paste',ev=>{
+        let txt=''; try{ txt=(ev.clipboardData||window.clipboardData).getData('text'); }catch(_){ return; }
+        if(!txt || !/[\t\n\r]/.test(txt)) return;
+        ev.preventDefault(); scPasteGrid(txt, ref); });
+      /* Drag across cells to select a range. Runs only when no formula is
+         being composed, so point-mode click-to-reference still wins. */
       inp.addEventListener('mousedown',ev=>{
+        const a=document.activeElement;
+        const composing=!!(a && a.value && a.value[0]==='=' && ((a.dataset&&a.dataset.ref)||a.id==='scBarInput'));
+        if(!composing){
+          if(ev.shiftKey){ ev.preventDefault();
+            const anc=_scSel?{r:_scSel.ar,c:_scSel.ac}:scParse(_scCur||ref)||{r:r,c:ci};
+            scSelSet(anc.r,anc.c,r,ci); return; }
+          _scDrag=true; _scSel={ar:r,ac:ci,br:r,bc:ci}; scSelPaint();
+        }
         const act=document.activeElement;
         const isCell=!!(act && act.dataset && act.dataset.ref), isBar=!!(act && act.id==='scBarInput');
         if(!act || act===inp || (!isCell && !isBar)) return;
@@ -2691,6 +2964,10 @@ function scratchBuild(){
         _scPoint={active:true, el:act, start:s, end:ne, r:r, c:SC_COLS.indexOf(c)};
         const bi=document.getElementById('scBarInput'); if(bi && act!==bi) bi.value=act.value;
         scHilite(act.value); });
+      inp.addEventListener('mouseenter',ev=>{
+        if(!_scDrag || !(ev.buttons&1)) return;
+        if(!_scSel) return;
+        _scSel.br=r; _scSel.bc=ci; scSelPaint(); });
       td.appendChild(inp); tr.appendChild(td); _scEls[ref]=inp; });
     tb.appendChild(tr); }
   tbl.appendChild(tb); wrap.appendChild(tbl);
@@ -2737,12 +3014,15 @@ function scRecalc(){
     if(document.activeElement===inp) return;   /* never clobber a cell mid-edit */
     const d=scDisplay(ref,visiting,memo);
     inp.value=d.text; inp.className=d.cls; });
+  scSelPaint();
 }
+document.addEventListener('mouseup',()=>{ _scDrag=false; });
 function scratchToggle(force){
   const o=document.getElementById('scratchOver'); if(!o) return;
   const open=(force!=null)?force:!o.classList.contains('open');
-  if(open){ scratchBuild(); scRecalc(); }
-  else if(document.activeElement && ((document.activeElement.dataset && document.activeElement.dataset.ref) || document.activeElement.id==='scBarInput')){ document.activeElement.blur(); }
+  if(open){ scratchBuild(); scRecalc(); scSelPaint(); }
+  else { _scSel=null; _scDrag=false; scSelPaint();
+    if(document.activeElement && ((document.activeElement.dataset && document.activeElement.dataset.ref) || document.activeElement.id==='scBarInput')){ document.activeElement.blur(); } }
   o.classList.toggle('open',open);
 }
 /* clearing is a two-tap arm, not a modal — fewer ways to lose a napkin */
@@ -3199,7 +3479,73 @@ function aiPacketCopy(){
 
 /* One place for the version number now. The guide popout wipes the body, so
    reading it back out of the DOM returned "unknown" there. */
-const APP_VERSION='3.10.1';
+const APP_VERSION='3.11.0';
+
+/* =====================================================================
+   KEYBOARD SHORTCUTS (v3.10.2)
+   Every note field is contenteditable and the app is full of inputs, so a
+   bare-letter shortcut would fire mid-sentence. Rule: unmodified keys are
+   ignored whenever focus is in a field. Ctrl combos are allowed through
+   because they can't be produced by ordinary typing.
+   ===================================================================== */
+function inTextField(el){ if(!el) return false;
+  if(el.isContentEditable) return true;
+  /* isContentEditable is a rendered property and not universally reliable, and
+     getting this wrong means a letter shortcut fires mid-note. Check the
+     attribute and any editable ancestor as well. */
+  try{ if(el.closest && el.closest('[contenteditable]:not([contenteditable="false"])')) return true; }catch(_){}
+  const t=(el.tagName||'').toUpperCase();
+  return t==='INPUT'||t==='TEXTAREA'||t==='SELECT'; }
+function anyModalOpen(){ return !!document.querySelector('.modal-bg.open'); }
+function shortcutsHelp(){ openModal('shortcutsBg'); }
+
+/* Gear-menu filter. Eight settings don't need searching on their own, so this
+   also reaches into the guide: typing "backup" surfaces the setting AND the
+   guide section, which is where the answer usually is. */
+let _gearGuideRows=[];
+function gearFilter(q){
+  const menu=document.getElementById('gearMenu'); if(!menu) return;
+  const term=(q||'').trim().toLowerCase();
+  _gearGuideRows.forEach(el=>el.remove()); _gearGuideRows=[];
+  const btns=[...menu.querySelectorAll('button')];
+  let hits=0;
+  btns.forEach(b=>{ const show=!term || b.textContent.toLowerCase().indexOf(term)>=0;
+    b.style.display=show?'':'none'; if(show) hits++; });
+  menu.querySelectorAll('.divider,.menu-label').forEach(e=>{ e.style.display=term?'none':''; });
+  if(term.length>=2){
+    let secs=[]; try{ secs=guideSections(); }catch(_){ secs=[]; }
+    secs.filter(sc=>sc.title.toLowerCase().indexOf(term)>=0 || sc.text.toLowerCase().indexOf(term)>=0)
+        .slice(0,4).forEach(sc=>{
+      const b=document.createElement('button');
+      b.innerHTML='\u2753&nbsp; Guide: '+gdEsc(sc.title);
+      b.onclick=()=>{ gearGo(function(){ openGuide(sc.i); }); };
+      menu.appendChild(b); _gearGuideRows.push(b); hits++; });
+  }
+  const no=document.getElementById('gearNoHit'); if(no) no.style.display=(term&&!hits)?'':'none';
+}
+function gearSearchReset(){ const f=document.getElementById('gearFind');
+  if(f){ f.value=''; gearFilter(''); } }
+document.addEventListener('keydown',function(e){
+  if(BELL_WIN||GUIDE_WIN) return;                 // popouts keep their own keys
+  const typing=inTextField(document.activeElement);
+  const mod=e.ctrlKey||e.metaKey;
+
+  if(mod && !e.shiftKey && !e.altKey){
+    const k=(e.key||'').toLowerCase();
+    if(k==='s'){ e.preventDefault(); save(); flash('Saved'); return; }
+    if(k==='k'){ e.preventDefault(); const f=document.getElementById('searchBox');
+      if(f && document.getElementById('main-journal').classList.contains('active')){ f.focus(); f.select(); }
+      else openGuide(); return; }
+    if(k==='1'){ e.preventDefault(); switchMain('journal'); return; }
+    if(k==='2'){ e.preventDefault(); switchMain('timecard'); return; }
+    if(k==='3'){ e.preventDefault(); switchMain('win'); return; }
+  }
+  if(typing || anyModalOpen() || e.altKey || mod) return;
+
+  if(e.key==='?'){ e.preventDefault(); shortcutsHelp(); return; }
+  if(e.key==='g'||e.key==='G'){ e.preventDefault(); openGuide(); return; }
+  if(e.key==='t'||e.key==='T'){ e.preventDefault(); bellStartPause(); return; }
+});
 /* The guide popout carries a small read-only context in its hash: version and
    COUNTS ONLY, same allowlist as the packet itself. It cannot read db — it
    short-circuits bootApp before storage — so without this the packet reported
@@ -3385,7 +3731,10 @@ function buildGuideShell(host){
   show('home');
   host._gdShow=show;
 }
-function openGuide(){ openModal('guideModalBg'); buildGuideShell(document.getElementById('guideHostModal')); }
+function openGuide(goTo){ openModal('guideModalBg');
+  const host=document.getElementById('guideHostModal');
+  buildGuideShell(host);
+  if(typeof goTo==='number' && host._gdShow) host._gdShow(goTo); }
 function guideWebviewCtor(){ return (typeof bellWebviewCtor==='function') ? bellWebviewCtor() : null; }
 async function guidePopout(){
   const Ctor=guideWebviewCtor(); if(!Ctor){ flash('The pop-out guide needs the desktop app.'); return; }
