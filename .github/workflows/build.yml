@@ -3,19 +3,21 @@ name: Build installers
 # Silicon). WiX/MSI is deliberately absent - candle.exe chokes on the
 # ampersand in "Project Journal & Timecard".
 #
-# Push to main        -> builds both installers, uploads them as Actions
-#                        artifacts (login required, expire after 90 days).
-# Push a v* tag       -> also attaches both installers to a DRAFT GitHub
-#                        Release, which is a public permanent download link
-#                        once you press Publish.
-# Actions tab         -> Run workflow, to build on demand.
+# Push to main   -> builds both installers, uploads them as Actions artifacts
+#                   (login required, expire after 90 days).
+# Publish a
+# release with a
+# v* tag         -> builds both installers AND attaches them to that release,
+#                   which is a public permanent download link. Publishing is
+#                   what creates the tag; saving a draft does not.
+# Actions tab    -> Run workflow, to build on demand.
 on:
   push:
     branches: [ main ]
     tags: [ 'v*' ]
   workflow_dispatch:
 
-# Needed by the release step to create the draft and upload assets.
+# Needed by the release step to upload assets.
 permissions:
   contents: write
 
@@ -53,10 +55,12 @@ jobs:
           name: pjt-${{ matrix.label }}-installer
           path: ${{ matrix.artifact_path }}
           if-no-files-found: error
-      - name: Attach to draft Release
+      # draft:false so this never flips an already-published release back to
+      # draft. Both jobs target the same release; each adds its own installer.
+      - name: Attach installers to the Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           files: ${{ matrix.artifact_path }}
-          draft: true
-          generate_release_notes: true
+          draft: false
+          fail_on_unmatched_files: true
