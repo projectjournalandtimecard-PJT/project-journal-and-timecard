@@ -3342,10 +3342,15 @@ async function guidePopout(){
 function guideWindowBoot(){
   document.title='PJT \u2014 User Guide';
   const src=document.getElementById('guideSource');
+  /* The AI packet modal lives in the main body, so the innerHTML replacement
+     below would delete it and the guide's button would silently do nothing.
+     Carry it across the same way guideSource is carried. */
+  const pk=document.getElementById('aiPacketBg');
   const dark=document.body.classList.contains('dark');
   document.body.className='guidewin'+(dark?' dark':'');
   document.body.innerHTML='<div id="guideHostWin" class="gd-wrap"></div>';
   if(src){ src.hidden=true; document.body.appendChild(src); }
+  if(pk){ pk.classList.remove('open'); document.body.appendChild(pk); }
   buildGuideShell(document.getElementById('guideHostWin'));
 }
 
