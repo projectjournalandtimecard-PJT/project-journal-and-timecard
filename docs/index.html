@@ -64,7 +64,7 @@ img{display:block;max-width:100%;}
 .hero-title{opacity:0;animation:up .9s 1.7s cubic-bezier(.2,.8,.2,1) forwards;}
 .hero-sub{opacity:0;animation:up .9s 1.95s cubic-bezier(.2,.8,.2,1) forwards;}
 @keyframes up{from{opacity:0;transform:translateY(26px);}to{opacity:1;transform:none;}}
-.scroll-hint{position:absolute;bottom:34px;left:50%;transform:translateX(-50%);
+.scroll-hint{position:relative;left:50%;transform:translateX(-50%);display:inline-block;
   font-family:var(--mono);font-size:10px;letter-spacing:.3em;color:var(--dim);
   opacity:0;animation:up .9s 2.4s forwards;}
 .scroll-hint span{display:block;width:1px;height:34px;background:linear-gradient(var(--dim),transparent);
@@ -134,18 +134,24 @@ a:focus-visible{outline:2px solid var(--blue);outline-offset:4px;}
 <div class="glow" aria-hidden="true"></div>
 
 <!-- ── 1. hero ────────────────────────────────────────────────────── -->
-<section class="scene" id="hero" style="height:190vh">
+<section class="scene" id="hero" style="height:150vh">
   <div class="pin">
+   <div id="heroInner" style="display:flex;flex-direction:column;align-items:center;will-change:transform,opacity">
     <svg class="mark" viewBox="0 0 120 120" aria-label="Project Journal and Timecard">
       <defs><linearGradient id="pg" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0" stop-color="#2563EB"/><stop offset="1" stop-color="#16A34A"/></linearGradient></defs>
       <rect class="plate" x="2" y="2" width="116" height="116" rx="27"/>
       <circle class="ring" cx="60" cy="58" r="34"/>
-      <circle class="dot" cx="90" cy="80" r="9" style="transform-origin:90px 80px"/>
+      <g id="dotWrap" style="transform-origin:60px 58px">
+        <circle class="dot" cx="90" cy="80" r="9" style="transform-origin:90px 80px"/>
+      </g>
     </svg>
     <h1 class="big hero-title">Project&nbsp;Journal<br>&amp; Timecard</h1>
-    <p class="sub hero-sub" style="margin-left:auto;margin-right:auto">Built by one accountant.<br>Shipped as one file.</p>
-    <div class="scroll-hint">SCROLL<span></span></div>
+    <p class="sub hero-sub" style="margin-left:auto;margin-right:auto">Workpapers and hours,<br>in one app.</p>
+   </div>
+    <div id="hintWrap" style="position:absolute;bottom:34px;left:0;right:0;will-change:opacity">
+      <div class="scroll-hint">SCROLL<span></span></div>
+    </div>
   </div>
 </section>
 
@@ -307,6 +313,10 @@ a:focus-visible{outline:2px solid var(--blue);outline-offset:4px;}
     guide:   document.getElementById('s-guide'),
     count:   document.getElementById('s-count')
   };
+  var sceneHero = document.getElementById('hero');
+  var dotWrap   = document.getElementById('dotWrap');
+  var heroInner = document.getElementById('heroInner');
+  var hintWrap  = document.getElementById('hintWrap');
   var devJournal = document.getElementById('devJournal');
   var devTimer   = document.getElementById('devTimer');
   var devGuide   = document.getElementById('devGuide');
@@ -333,6 +343,20 @@ a:focus-visible{outline:2px solid var(--blue);outline-offset:4px;}
   var pad = function(n){ return (n<10?'0':'')+n; };
 
   function frame(){
+    /* The hero used to sit still for ~90vh, which reads as a broken scroll
+       wheel. Now the first pixel of scroll orbits the dot around the ring,
+       so the page answers straight away. */
+    if(sceneHero && dotWrap){
+      var hp = prog(sceneHero);
+      dotWrap.style.transform = 'rotate(' + (hp * 540) + 'deg)';
+      if(hintWrap) hintWrap.style.opacity = clamp(1 - hp * 5, 0, 1);
+      if(heroInner){
+        var out = ease(clamp((hp - 0.55) / 0.45, 0, 1));
+        heroInner.style.opacity = 1 - out;
+        heroInner.style.transform = 'translateY(' + (-out * 46) + 'px) scale(' + (1 - out * 0.07) + ')';
+      }
+    }
+
     /* word reveals, tied to their own scene */
     wordSets.forEach(function(set){ if(set.scene) words(set, prog(set.scene)); });
 
@@ -393,6 +417,7 @@ a:focus-visible{outline:2px solid var(--blue);outline-offset:4px;}
     [devJournal,devTimer,devGuide].forEach(function(d){ if(d){ d.style.transform='none'; d.style.opacity=1; } });
     wordSets.forEach(function(s){ s.words.forEach(function(w){ w.style.opacity=1; w.style.transform='none'; }); });
     blocks.forEach(function(b){ b.style.transform='scaleY(1)'; b.firstChild.style.opacity=1; });
+    if(dotWrap) dotWrap.style.transform='none';
     cells.forEach(function(c,i){ c.style.opacity = i>=60?0.07:1; });
     if(c1) c1.textContent='1';
   }
