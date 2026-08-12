@@ -93,12 +93,19 @@ img{display:block;max-width:100%;}
 .clock{font-variation-settings:'wdth' 100,'wght' 700;font-size:clamp(56px,11vw,140px);
   letter-spacing:-.05em;font-variant-numeric:tabular-nums;}
 
-/* ── counters ─────────────────────────────────────────────────────── */
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(20px,5vw,70px);text-align:center;}
-.stat b{display:block;font-variation-settings:'wdth' 100,'wght' 800;
-  font-size:clamp(48px,11vw,150px);letter-spacing:-.05em;line-height:1;}
-.stat span{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.22em;
-  text-transform:uppercase;color:var(--dim);margin-top:14px;}
+/* ── the three cards + cyclone ────────────────────────────────────── */
+.cyclone{position:relative;width:100%;height:100%;}
+.card{position:absolute;left:50%;top:50%;width:min(300px,74vw);
+  padding:38px 26px 32px;text-align:center;border-radius:20px;
+  border:1px solid rgba(238,243,250,.14);background:rgba(13,19,28,.72);
+  backdrop-filter:blur(8px);box-shadow:0 30px 70px -30px rgba(0,0,0,.85);
+  opacity:0;will-change:transform,opacity;}
+.card b{display:block;font-variation-settings:'wdth' 100,'wght' 800;
+  font-size:clamp(58px,9vw,104px);letter-spacing:-.05em;line-height:1;}
+.card span{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.24em;
+  text-transform:uppercase;color:var(--dim);margin-top:12px;}
+.card em{display:block;font-style:normal;font-family:var(--mono);font-size:12px;
+  color:var(--dim);opacity:.62;margin-top:16px;}
 
 /* ── final ────────────────────────────────────────────────────────── */
 #get .pin{flex-direction:column;text-align:center;}
@@ -134,7 +141,7 @@ a:focus-visible{outline:2px solid var(--blue);outline-offset:4px;}
 <div class="glow" aria-hidden="true"></div>
 
 <!-- ── 1. hero ────────────────────────────────────────────────────── -->
-<section class="scene" id="hero" style="height:150vh">
+<section class="scene" id="hero" style="height:200vh">
   <div class="pin">
    <div id="heroInner" style="display:flex;flex-direction:column;align-items:center;will-change:transform,opacity">
     <svg class="mark" viewBox="0 0 120 120" aria-label="Project Journal and Timecard">
@@ -156,7 +163,7 @@ a:focus-visible{outline:2px solid var(--blue);outline-offset:4px;}
 </section>
 
 <!-- ── 2. the journal, zooming in ─────────────────────────────────── -->
-<section class="scene" id="s-journal" style="height:320vh">
+<section class="scene" id="s-journal" style="height:420vh">
   <div class="pin">
     <div class="mid" style="text-align:center">
       <div class="big" data-words style="margin-bottom:6vh">Your projects.</div>
@@ -168,7 +175,7 @@ a:focus-visible{outline:2px solid var(--blue);outline-offset:4px;}
 </section>
 
 <!-- ── 3. the day, drawn live ─────────────────────────────────────── -->
-<section class="scene" id="s-day" style="height:340vh">
+<section class="scene" id="s-day" style="height:440vh">
   <div class="pin">
     <div class="mid" style="display:flex;flex-direction:column;align-items:center;text-align:center">
       <div class="kicker">The time card</div>
@@ -182,7 +189,7 @@ a:focus-visible{outline:2px solid var(--blue);outline-offset:4px;}
 </section>
 
 <!-- ── 4. the timer, draining live ────────────────────────────────── -->
-<section class="scene" id="s-timer" style="height:340vh">
+<section class="scene" id="s-timer" style="height:430vh">
   <div class="pin">
     <div class="mid">
       <div class="gridwrap">
@@ -198,7 +205,7 @@ a:focus-visible{outline:2px solid var(--blue);outline-offset:4px;}
 </section>
 
 <!-- ── 5. it floats ───────────────────────────────────────────────── -->
-<section class="scene" id="s-float" style="height:300vh">
+<section class="scene" id="s-float" style="height:400vh">
   <div class="pin">
     <div class="mid" style="text-align:center">
       <div class="mid-t" data-words style="margin-bottom:5vh">And it floats.</div>
@@ -210,7 +217,7 @@ a:focus-visible{outline:2px solid var(--blue);outline-offset:4px;}
 </section>
 
 <!-- ── 6. the guide ───────────────────────────────────────────────── -->
-<section class="scene" id="s-guide" style="height:300vh">
+<section class="scene" id="s-guide" style="height:400vh">
   <div class="pin">
     <div class="mid" style="text-align:center">
       <div class="mid-t" data-words style="margin-bottom:5vh">Stuck? It explains itself.</div>
@@ -222,7 +229,7 @@ a:focus-visible{outline:2px solid var(--blue);outline-offset:4px;}
 </section>
 
 <!-- ── 7. privacy ─────────────────────────────────────────────────── -->
-<section class="scene" id="s-priv" style="height:230vh">
+<section class="scene" id="s-priv" style="height:300vh">
   <div class="pin">
     <div class="mid" style="text-align:center">
       <div class="big" data-words>Nothing<br>leaves your<br>computer.</div>
@@ -230,31 +237,31 @@ a:focus-visible{outline:2px solid var(--blue);outline-offset:4px;}
   </div>
 </section>
 
-<!-- ── 8. the numbers ─────────────────────────────────────────────── -->
-<section class="scene" id="s-count" style="height:260vh">
+<!-- ── 8. three cards, then the cyclone ──────────────────────────── -->
+<section class="scene" id="s-count" style="height:560vh">
   <div class="pin">
-    <div class="mid">
-      <div class="stats">
-        <div class="stat"><b><span id="c1">0</span></b><span>File</span></div>
-        <div class="stat"><b><span id="c2">0</span></b><span>Servers</span></div>
-        <div class="stat"><b><span id="c3">0</span></b><span>Accounts</span></div>
-      </div>
+    <div class="cyclone" id="cyclone">
+      <article class="card" data-i="0"><b>0</b><span>Servers</span><em>Nothing to go down</em></article>
+      <article class="card" data-i="1"><b>0</b><span>Accounts</span><em>Nothing to sign up for</em></article>
+      <article class="card" data-i="2"><b>1</b><span>File</span><em>That's the whole app</em></article>
     </div>
   </div>
 </section>
 
-<!-- ── 9. get it ──────────────────────────────────────────────────── -->
-<section class="scene" id="get" style="height:100vh">
+<!-- ── 9. arrive ──────────────────────────────────────────────────── -->
+<section class="scene" id="get" style="height:240vh">
   <div class="pin">
     <div class="mid" style="text-align:center">
-      <div class="big rv">Have a look.</div>
-      <div class="btns rv">
-        <a class="btn btn-1" href="https://github.com/projectjournalandtimecard-PJT/project-journal-and-timecard/releases/latest">Download</a>
-        <a class="btn btn-2" href="https://github.com/projectjournalandtimecard-PJT/project-journal-and-timecard">See the code</a>
+      <div id="arrive" style="will-change:transform,opacity">
+        <div class="big">Have a look.</div>
+        <div class="btns">
+          <a class="btn btn-1" href="https://github.com/projectjournalandtimecard-PJT/project-journal-and-timecard/releases/latest">Download</a>
+          <a class="btn btn-2" href="https://github.com/projectjournalandtimecard-PJT/project-journal-and-timecard">See the code</a>
+        </div>
+        <p class="fine">Windows &amp; macOS · free · MIT licensed<br>
+          Unsigned installer — your computer will ask you to confirm.<br>
+          <a href="https://github.com/projectjournalandtimecard-PJT/project-journal-and-timecard">github.com/projectjournalandtimecard-PJT</a></p>
       </div>
-      <p class="fine rv">Windows &amp; macOS · free · MIT licensed<br>
-        Unsigned installer — your computer will ask you to confirm.<br>
-        <a href="https://github.com/projectjournalandtimecard-PJT/project-journal-and-timecard">github.com/projectjournalandtimecard-PJT</a></p>
     </div>
   </div>
 </section>
@@ -295,7 +302,8 @@ a:focus-visible{outline:2px solid var(--blue);outline-offset:4px;}
 
   var clock = document.getElementById('clock');
   var chainNow = document.getElementById('chainNow');
-  var c1=document.getElementById('c1'), c2=document.getElementById('c2'), c3=document.getElementById('c3');
+  var cards  = [].slice.call(document.querySelectorAll('.card'));
+  var arrive = document.getElementById('arrive');
 
   /* ---- scene progress: 0 at the moment it pins, 1 when it unpins ---- */
   function prog(scene){
@@ -311,7 +319,8 @@ a:focus-visible{outline:2px solid var(--blue);outline-offset:4px;}
     timer:   document.getElementById('s-timer'),
     flt:     document.getElementById('s-float'),
     guide:   document.getElementById('s-guide'),
-    count:   document.getElementById('s-count')
+    count:   document.getElementById('s-count'),
+    get:     document.getElementById('get')
   };
   var sceneHero = document.getElementById('hero');
   var dotWrap   = document.getElementById('dotWrap');
@@ -348,7 +357,7 @@ a:focus-visible{outline:2px solid var(--blue);outline-offset:4px;}
        so the page answers straight away. */
     if(sceneHero && dotWrap){
       var hp = prog(sceneHero);
-      dotWrap.style.transform = 'rotate(' + (hp * 540) + 'deg)';
+      dotWrap.style.transform = 'rotate(' + (hp * 420) + 'deg)';
       if(hintWrap) hintWrap.style.opacity = clamp(1 - hp * 5, 0, 1);
       if(heroInner){
         var out = ease(clamp((hp - 0.55) / 0.45, 0, 1));
@@ -395,12 +404,73 @@ a:focus-visible{outline:2px solid var(--blue);outline-offset:4px;}
       }
     }
 
-    /* 1 / 0 / 0 — the counters land */
-    if(scenes.count && c1){
-      var cp = ease(clamp((prog(scenes.count)-0.15)/0.5, 0, 1));
-      c1.textContent = cp > 0.55 ? '1' : Math.round(cp*9);
-      c2.textContent = '0'; c3.textContent = '0';
-      c1.parentElement.parentElement.style.opacity = clamp(cp*3,0,1);
+    /* ── the three cards ────────────────────────────────────────────
+       Four acts, then the drain:
+         A  0.00-0.16  card 1 rises out of the background, centred
+         B  0.16-0.34  card 1 slides left, card 2 arrives beside it
+         C  0.34-0.52  card 3 enters from the right, all three settle
+         D  0.52-0.66  they hold
+         E  0.66-1.00  the cyclone: bob, swing into a ring, spin up,
+                       spiral into the middle and vanish backwards
+       Positions are computed per act and interpolated, so a card never
+       jumps — it is always travelling from where it actually was.      */
+    if(scenes.count && cards.length){
+      var p  = prog(scenes.count);
+      var u  = Math.min(340, innerWidth * 0.30);   // horizontal spacing unit
+      var aIn = [ease(clamp(p/0.16,0,1)),
+                 ease(clamp((p-0.18)/0.16,0,1)),
+                 ease(clamp((p-0.36)/0.16,0,1))];
+      var two   = ease(clamp((p-0.18)/0.16,0,1));  // 1 card  → 2 cards
+      var three = ease(clamp((p-0.36)/0.16,0,1));  // 2 cards → 3 cards
+      var cyc   = clamp((p-0.66)/0.34, 0, 1);      // the drain
+
+      /* resting x for each card at the current act */
+      var restX = [
+        (0)*(1-two) + (-0.5*u)*two*(1-three) + (-u)*three,
+        (0.5*u)*two*(1-three) + (0)*three,
+        (u)*three
+      ];
+      /* card 2 and 3 slide in from off-screen right before they settle */
+      var enterX = [0, (1-aIn[1])*innerWidth*0.55, (1-aIn[2])*innerWidth*0.6];
+
+      cards.forEach(function(card,i){
+        var appear = aIn[i];
+        var x = restX[i] + enterX[i];
+        var y = 0, rot = 0;
+        /* card 1 arrives from the back rather than the side */
+        var sc = (i===0 ? 0.55 + 0.45*appear : 0.82 + 0.18*appear);
+        var op = appear;
+
+        if(cyc > 0){
+          var dir   = (i===1 ? -1 : 1);
+          var form  = ease(clamp(cyc/0.34, 0, 1));      // line → ring
+          var spin  = cyc*cyc*860;                       // accelerating
+          var pull  = ease(clamp((cyc-0.22)/0.78, 0, 1));// inward spiral
+          var R     = u*0.92;
+          var ang   = ((i*120 - 90) + spin) * Math.PI/180;
+          var ringX = Math.cos(ang)*R, ringY = Math.sin(ang)*R;
+
+          x  = x*(1-form) + ringX*form;
+          y  = ringY*form + Math.sin(cyc*Math.PI*4)*38*dir*(1-form);
+          rot = Math.sin(cyc*Math.PI*3)*11*dir*(1-form) + spin*0.22;
+
+          x *= (1-pull); y *= (1-pull);
+          sc = sc*(1 - pull*0.94);
+          op = appear * (1 - ease(clamp((cyc-0.5)/0.5, 0, 1)));
+        }
+        card.style.opacity = op;
+        card.style.transform =
+          'translate(-50%,-50%) translate('+x.toFixed(1)+'px,'+y.toFixed(1)+'px) '+
+          'rotate('+rot.toFixed(2)+'deg) scale('+sc.toFixed(3)+')';
+      });
+    }
+
+    /* ── arrive: the last panel comes at you from the far distance ─── */
+    if(scenes.get && arrive){
+      var gp = ease(clamp(prog(scenes.get)/0.5, 0, 1));
+      arrive.style.opacity   = gp;
+      arrive.style.transform = 'scale('+(0.42 + 0.58*gp).toFixed(3)+')';
+      arrive.style.filter    = gp < 1 ? 'blur('+((1-gp)*7).toFixed(1)+'px)' : 'none';
     }
     ticking = false;
   }
@@ -419,7 +489,13 @@ a:focus-visible{outline:2px solid var(--blue);outline-offset:4px;}
     blocks.forEach(function(b){ b.style.transform='scaleY(1)'; b.firstChild.style.opacity=1; });
     if(dotWrap) dotWrap.style.transform='none';
     cells.forEach(function(c,i){ c.style.opacity = i>=60?0.07:1; });
-    if(c1) c1.textContent='1';
+    cards.forEach(function(c){ c.style.opacity=1; c.style.position='relative';
+      c.style.left='auto'; c.style.top='auto'; c.style.transform='none';
+      c.style.margin='0 auto 22px'; });
+    var cy=document.getElementById('cyclone');
+    if(cy){ cy.style.height='auto'; cy.style.display='flex';
+      cy.style.flexDirection='column'; cy.style.alignItems='center'; }
+    if(arrive){ arrive.style.opacity=1; arrive.style.transform='none'; arrive.style.filter='none'; }
   }
 
   /* final panel */
