@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project Journal &amp; Timecard</title>
+<meta name="description" content="Workpaper tracking and daily time logging in one self-contained app. One file. No server. No account.">
+<meta property="og:title" content="Project Journal &amp; Timecard">
+<meta property="og:description" content="One file. No server. No account.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#070A10;
+  --void-2:#0D131C;
+  --blue:#2F6BFF;
+  --green:#3DDC84;
+  --amber:#F5A524;
+  --white:#EEF3FA;
+  --dim:#78859A;
+  --display:'Archivo',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{background:var(--void);}
+body{
+  background:var(--void); color:var(--white); font-family:var(--display);
+  overflow-x:hidden; -webkit-font-smoothing:antialiased;
+}
+img{display:block;max-width:100%;}
+
+/* two-light stage: blue key, green rim — the app's own colours lighting the room */
+.glow{position:fixed;inset:0;pointer-events:none;z-index:0;}
+.glow::before,.glow::after{content:'';position:absolute;border-radius:50%;filter:blur(120px);opacity:.20;}
+.glow::before{width:60vw;height:60vw;left:-16vw;top:-10vw;background:var(--blue);}
+.glow::after{width:46vw;height:46vw;right:-14vw;bottom:-12vw;background:var(--green);opacity:.13;}
+
+.scene{position:relative;z-index:1;}
+.pin{position:sticky;top:0;height:100vh;display:flex;align-items:center;justify-content:center;
+  overflow:hidden;}
+.mid{width:min(1180px,90vw);margin:0 auto;}
+
+.kicker{font-family:var(--mono);font-size:11px;letter-spacing:.28em;text-transform:uppercase;
+  color:var(--dim);margin-bottom:22px;}
+.big{font-variation-settings:'wdth' 100,'wght' 800;letter-spacing:-.045em;line-height:.92;
+  font-size:clamp(44px,9vw,148px);}
+.mid-t{font-variation-settings:'wdth' 100,'wght' 700;letter-spacing:-.035em;line-height:1.0;
+  font-size:clamp(32px,6vw,86px);}
+.sub{font-family:var(--mono);font-size:clamp(12px,1.4vw,15px);color:var(--dim);
+  letter-spacing:.02em;line-height:1.7;margin-top:24px;max-width:34ch;}
+.accent{color:var(--blue);}
+.accent-g{color:var(--green);}
+
+/* ── hero ─────────────────────────────────────────────────────────── */
+#hero .pin{flex-direction:column;text-align:center;}
+.mark{width:118px;height:118px;margin-bottom:38px;}
+.mark .ring{fill:none;stroke:var(--white);stroke-width:11;stroke-linecap:round;
+  stroke-dasharray:322;stroke-dashoffset:322;animation:draw 1.5s .25s cubic-bezier(.7,0,.2,1) forwards;}
+.mark .dot{fill:var(--amber);opacity:0;animation:pop .5s 1.55s cubic-bezier(.3,1.6,.5,1) forwards;}
+.mark .plate{fill:url(#pg);}
+@keyframes draw{to{stroke-dashoffset:0;}}
+@keyframes pop{from{opacity:0;transform:scale(.2);}to{opacity:1;transform:scale(1);}}
+.hero-title{opacity:0;animation:up .9s 1.7s cubic-bezier(.2,.8,.2,1) forwards;}
+.hero-sub{opacity:0;animation:up .9s 1.95s cubic-bezier(.2,.8,.2,1) forwards;}
+@keyframes up{from{opacity:0;transform:translateY(26px);}to{opacity:1;transform:none;}}
+.scroll-hint{position:absolute;bottom:34px;left:50%;transform:translateX(-50%);
+  font-family:var(--mono);font-size:10px;letter-spacing:.3em;color:var(--dim);
+  opacity:0;animation:up .9s 2.4s forwards;}
+.scroll-hint span{display:block;width:1px;height:34px;background:linear-gradient(var(--dim),transparent);
+  margin:12px auto 0;}
+
+/* ── device frame ─────────────────────────────────────────────────── */
+.device{border-radius:12px;overflow:hidden;border:1px solid rgba(238,243,250,.13);
+  background:var(--void-2);box-shadow:0 50px 120px -40px rgba(0,0,0,.9),0 0 90px -50px var(--blue);
+  will-change:transform;}
+.device img{width:100%;height:auto;}
+
+/* ── scene: the day, built live ───────────────────────────────────── */
+.chain{display:flex;gap:5px;width:min(920px,86vw);height:74px;margin-top:44px;}
+.blk{flex:1;border-radius:5px;background:rgba(238,243,250,.07);position:relative;overflow:hidden;
+  transform:scaleY(.28);transform-origin:bottom;will-change:transform;}
+.blk i{position:absolute;inset:0;opacity:0;will-change:opacity;}
+.blk.b i{background:var(--green);} .blk.n i{background:var(--amber);} .blk.u i{background:rgba(238,243,250,.3);}
+.chain-lab{display:flex;justify-content:space-between;width:min(920px,86vw);
+  font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--dim);margin-top:14px;}
+
+/* ── scene: the timer, draining live ──────────────────────────────── */
+.gridwrap{display:flex;align-items:center;gap:clamp(28px,6vw,90px);flex-wrap:wrap;justify-content:center;}
+.tgrid{display:grid;grid-template-columns:repeat(10,1fr);gap:6px;
+  width:min(400px,64vw);}
+.tgrid i{aspect-ratio:1;border-radius:3px;background:var(--blue);will-change:opacity,transform;}
+.clock{font-variation-settings:'wdth' 100,'wght' 700;font-size:clamp(56px,11vw,140px);
+  letter-spacing:-.05em;font-variant-numeric:tabular-nums;}
+
+/* ── counters ─────────────────────────────────────────────────────── */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(20px,5vw,70px);text-align:center;}
+.stat b{display:block;font-variation-settings:'wdth' 100,'wght' 800;
+  font-size:clamp(48px,11vw,150px);letter-spacing:-.05em;line-height:1;}
+.stat span{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--dim);margin-top:14px;}
+
+/* ── final ────────────────────────────────────────────────────────── */
+#get .pin{flex-direction:column;text-align:center;}
+.btns{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:40px;}
+.btn{font-family:var(--mono);font-size:13px;letter-spacing:.08em;text-decoration:none;
+  padding:16px 30px;border-radius:100px;transition:transform .18s ease,background .18s ease;}
+.btn-1{background:var(--white);color:var(--void);}
+.btn-1:hover{transform:translateY(-3px);background:#fff;}
+.btn-2{color:var(--white);border:1px solid rgba(238,243,250,.25);}
+.btn-2:hover{transform:translateY(-3px);background:rgba(238,243,250,.08);}
+.fine{font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:34px;line-height:1.9;}
+.fine a{color:var(--dim);}
+
+/* ── shared reveal ────────────────────────────────────────────────── */
+.rv{opacity:0;transform:translateY(30px);transition:opacity .8s cubic-bezier(.2,.8,.2,1),
+  transform .8s cubic-bezier(.2,.8,.2,1);}
+.rv.in{opacity:1;transform:none;}
+a:focus-visible{outline:2px solid var(--blue);outline-offset:4px;}
+
+@media(prefers-reduced-motion:reduce){
+  .rv{opacity:1;transform:none;transition:none;}
+  .mark .ring{animation:none;stroke-dashoffset:0;}
+  .mark .dot{animation:none;opacity:1;}
+  .hero-title,.hero-sub,.scroll-hint{animation:none;opacity:1;}
+  .scene{height:auto !important;}
+  .pin{position:relative;height:auto;padding:16vh 0;}
+  .btn:hover{transform:none;}
+}
+</style>
+</head>
+<body>
+
+<div class="glow" aria-hidden="true"></div>
+
+<!-- ── 1. hero ────────────────────────────────────────────────────── -->
+<section class="scene" id="hero" style="height:190vh">
+  <div class="pin">
+    <svg class="mark" viewBox="0 0 120 120" aria-label="Project Journal and Timecard">
+      <defs><linearGradient id="pg" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#2563EB"/><stop offset="1" stop-color="#16A34A"/></linearGradient></defs>
+      <rect class="plate" x="2" y="2" width="116" height="116" rx="27"/>
+      <circle class="ring" cx="60" cy="58" r="34"/>
+      <circle class="dot" cx="90" cy="80" r="9" style="transform-origin:90px 80px"/>
+    </svg>
+    <h1 class="big hero-title">Project&nbsp;Journal<br>&amp; Timecard</h1>
+    <p class="sub hero-sub" style="margin-left:auto;margin-right:auto">Built by one accountant.<br>Shipped as one file.</p>
+    <div class="scroll-hint">SCROLL<span></span></div>
+  </div>
+</section>
+
+<!-- ── 2. the journal, zooming in ─────────────────────────────────── -->
+<section class="scene" id="s-journal" style="height:320vh">
+  <div class="pin">
+    <div class="mid" style="text-align:center">
+      <div class="big" data-words style="margin-bottom:6vh">Your projects.</div>
+      <div class="device" id="devJournal" style="width:min(1080px,88vw);margin:0 auto">
+        <img src="screenshots/journal.png" alt="The project journal, showing workpaper sections with budgets and notes." loading="eager">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 3. the day, drawn live ─────────────────────────────────────── -->
+<section class="scene" id="s-day" style="height:340vh">
+  <div class="pin">
+    <div class="mid" style="display:flex;flex-direction:column;align-items:center;text-align:center">
+      <div class="kicker">The time card</div>
+      <div class="mid-t" data-words>Your day, as one chain.</div>
+      <div class="chain" id="chain" aria-hidden="true"></div>
+      <div class="chain-lab"><span>8:00 AM</span><span id="chainNow">—</span><span>5:00 PM</span></div>
+      <p class="sub" style="margin-left:auto;margin-right:auto;text-align:center">
+        You set the stop time. Every block starts where the last one ended.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── 4. the timer, draining live ────────────────────────────────── -->
+<section class="scene" id="s-timer" style="height:340vh">
+  <div class="pin">
+    <div class="mid">
+      <div class="gridwrap">
+        <div class="tgrid" id="tgrid" aria-hidden="true"></div>
+        <div>
+          <div class="kicker">Focus timer</div>
+          <div class="clock" id="clock">25:00</div>
+          <p class="sub">A hundred squares. They go as the time goes.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 5. it floats ───────────────────────────────────────────────── -->
+<section class="scene" id="s-float" style="height:300vh">
+  <div class="pin">
+    <div class="mid" style="text-align:center">
+      <div class="mid-t" data-words style="margin-bottom:5vh">And it floats.</div>
+      <div class="device" id="devTimer" style="width:min(980px,88vw);margin:0 auto">
+        <img src="screenshots/timer.png" alt="The focus timer popped out into its own window above the app." loading="lazy">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 6. the guide ───────────────────────────────────────────────── -->
+<section class="scene" id="s-guide" style="height:300vh">
+  <div class="pin">
+    <div class="mid" style="text-align:center">
+      <div class="mid-t" data-words style="margin-bottom:5vh">Stuck? It explains itself.</div>
+      <div class="device" id="devGuide" style="width:min(1020px,88vw);margin:0 auto">
+        <img src="screenshots/guide.png" alt="The built-in user guide, with search and a sidebar of sections." loading="lazy">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 7. privacy ─────────────────────────────────────────────────── -->
+<section class="scene" id="s-priv" style="height:230vh">
+  <div class="pin">
+    <div class="mid" style="text-align:center">
+      <div class="big" data-words>Nothing<br>leaves your<br>computer.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 8. the numbers ─────────────────────────────────────────────── -->
+<section class="scene" id="s-count" style="height:260vh">
+  <div class="pin">
+    <div class="mid">
+      <div class="stats">
+        <div class="stat"><b><span id="c1">0</span></b><span>File</span></div>
+        <div class="stat"><b><span id="c2">0</span></b><span>Servers</span></div>
+        <div class="stat"><b><span id="c3">0</span></b><span>Accounts</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 9. get it ──────────────────────────────────────────────────── -->
+<section class="scene" id="get" style="height:100vh">
+  <div class="pin">
+    <div class="mid" style="text-align:center">
+      <div class="big rv">Have a look.</div>
+      <div class="btns rv">
+        <a class="btn btn-1" href="https://github.com/projectjournalandtimecard-PJT/project-journal-and-timecard/releases/latest">Download</a>
+        <a class="btn btn-2" href="https://github.com/projectjournalandtimecard-PJT/project-journal-and-timecard">See the code</a>
+      </div>
+      <p class="fine rv">Windows &amp; macOS · free · MIT licensed<br>
+        Unsigned installer — your computer will ask you to confirm.<br>
+        <a href="https://github.com/projectjournalandtimecard-PJT/project-journal-and-timecard">github.com/projectjournalandtimecard-PJT</a></p>
+    </div>
+  </div>
+</section>
+
+<script>
+(function(){
+  var reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  var clamp = function(v,a,b){ return v<a?a:v>b?b:v; };
+  var ease  = function(t){ return t<.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2; };
+
+  /* ---- split every [data-words] line so words can arrive one at a time ---- */
+  var wordSets = [];
+  [].forEach.call(document.querySelectorAll('[data-words]'), function(el){
+    var parts = el.innerHTML.split(/(<br\s*\/?>)/i), out='', words=[];
+    parts.forEach(function(chunk){
+      if(/^<br/i.test(chunk)){ out += chunk; return; }
+      chunk.split(/\s+/).filter(Boolean).forEach(function(w){
+        out += '<span class="w" style="display:inline-block;will-change:transform,opacity">'+w+'</span> ';
+      });
+    });
+    el.innerHTML = out;
+    words = [].slice.call(el.querySelectorAll('.w'));
+    wordSets.push({ el:el, words:words, scene:el.closest('.scene') });
+  });
+
+  /* ---- build the day chain: 9 blocks, billable / non-billable / lunch ---- */
+  var chain = document.getElementById('chain');
+  var kinds = ['b','b','b','u','b','n','b','b','n'];
+  var blocks = [];
+  if(chain){ kinds.forEach(function(k){
+    var d=document.createElement('div'); d.className='blk '+k;
+    d.appendChild(document.createElement('i'));
+    chain.appendChild(d); blocks.push(d); }); }
+
+  /* ---- build the timer grid: 100 cells ---- */
+  var tgrid = document.getElementById('tgrid'), cells=[];
+  if(tgrid){ for(var i=0;i<100;i++){ var c=document.createElement('i'); tgrid.appendChild(c); cells.push(c); } }
+
+  var clock = document.getElementById('clock');
+  var chainNow = document.getElementById('chainNow');
+  var c1=document.getElementById('c1'), c2=document.getElementById('c2'), c3=document.getElementById('c3');
+
+  /* ---- scene progress: 0 at the moment it pins, 1 when it unpins ---- */
+  function prog(scene){
+    var r = scene.getBoundingClientRect();
+    var span = scene.offsetHeight - window.innerHeight;
+    if(span <= 0) return r.top <= 0 ? 1 : 0;
+    return clamp(-r.top / span, 0, 1);
+  }
+
+  var scenes = {
+    journal: document.getElementById('s-journal'),
+    day:     document.getElementById('s-day'),
+    timer:   document.getElementById('s-timer'),
+    flt:     document.getElementById('s-float'),
+    guide:   document.getElementById('s-guide'),
+    count:   document.getElementById('s-count')
+  };
+  var devJournal = document.getElementById('devJournal');
+  var devTimer   = document.getElementById('devTimer');
+  var devGuide   = document.getElementById('devGuide');
+
+  /* a screenshot that rises, straightens and grows into the frame */
+  function riseIn(el, p, fromScale, fromTilt){
+    var e = ease(clamp(p*1.7, 0, 1));
+    var s = fromScale + (1-fromScale)*e;
+    var rx = fromTilt*(1-e);
+    var y  = (1-e)*70;
+    el.style.transform = 'perspective(1600px) translateY('+y+'px) rotateX('+rx+'deg) scale('+s+')';
+    el.style.opacity = clamp(p*4, 0, 1);
+  }
+
+  function words(set, p){
+    var n = set.words.length;
+    set.words.forEach(function(w,i){
+      var start = i/(n+2), local = clamp((p - start)/0.22, 0, 1), e = ease(local);
+      w.style.opacity = e;
+      w.style.transform = 'translateY('+((1-e)*34)+'px)';
+    });
+  }
+
+  var pad = function(n){ return (n<10?'0':'')+n; };
+
+  function frame(){
+    /* word reveals, tied to their own scene */
+    wordSets.forEach(function(set){ if(set.scene) words(set, prog(set.scene)); });
+
+    if(scenes.journal) riseIn(devJournal, prog(scenes.journal), 0.62, 12);
+    if(scenes.flt)     riseIn(devTimer,   prog(scenes.flt),     0.70, -9);
+    if(scenes.guide)   riseIn(devGuide,   prog(scenes.guide),   0.70, 8);
+
+    /* the day builds block by block, then the whole chain settles */
+    if(scenes.day && blocks.length){
+      var p = prog(scenes.day), n = blocks.length;
+      blocks.forEach(function(b,i){
+        var local = clamp((p - 0.16 - i*0.055)/0.13, 0, 1), e = ease(local);
+        b.style.transform = 'scaleY('+(0.28 + 0.72*e)+')';
+        b.firstChild.style.opacity = e;
+      });
+      if(chainNow){
+        var mins = Math.round(clamp((p-0.16)/0.62,0,1) * 540);
+        var h = 8 + Math.floor(mins/60), m = mins%60;
+        var ampm = h>=12?'PM':'AM', hh = h>12?h-12:h;
+        chainNow.textContent = p<0.16 ? '—' : hh+':'+pad(m)+' '+ampm;
+      }
+    }
+
+    /* the timer drains — the squares go as the clock goes */
+    if(scenes.timer && cells.length){
+      var tp = ease(clamp((prog(scenes.timer)-0.12)/0.72, 0, 1));
+      var gone = Math.round(tp*100);
+      for(var i=0;i<100;i++){
+        var off = i >= (100-gone);
+        cells[i].style.opacity = off ? 0.07 : 1;
+        cells[i].style.transform = off ? 'scale(.72)' : 'scale(1)';
+      }
+      if(clock){
+        var left = Math.round((1-tp)*1500);
+        clock.textContent = Math.floor(left/60)+':'+pad(left%60);
+      }
+    }
+
+    /* 1 / 0 / 0 — the counters land */
+    if(scenes.count && c1){
+      var cp = ease(clamp((prog(scenes.count)-0.15)/0.5, 0, 1));
+      c1.textContent = cp > 0.55 ? '1' : Math.round(cp*9);
+      c2.textContent = '0'; c3.textContent = '0';
+      c1.parentElement.parentElement.style.opacity = clamp(cp*3,0,1);
+    }
+    ticking = false;
+  }
+
+  var ticking = false;
+  function onScroll(){ if(ticking) return; ticking = true; requestAnimationFrame(frame); }
+
+  if(!reduce){
+    window.addEventListener('scroll', onScroll, {passive:true});
+    window.addEventListener('resize', onScroll);
+    frame();
+  } else {
+    /* static, legible fallback */
+    [devJournal,devTimer,devGuide].forEach(function(d){ if(d){ d.style.transform='none'; d.style.opacity=1; } });
+    wordSets.forEach(function(s){ s.words.forEach(function(w){ w.style.opacity=1; w.style.transform='none'; }); });
+    blocks.forEach(function(b){ b.style.transform='scaleY(1)'; b.firstChild.style.opacity=1; });
+    cells.forEach(function(c,i){ c.style.opacity = i>=60?0.07:1; });
+    if(c1) c1.textContent='1';
+  }
+
+  /* final panel */
+  if('IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(es){
+      es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+    },{threshold:.2});
+    [].forEach.call(document.querySelectorAll('.rv'), function(el){ io.observe(el); });
+  } else {
+    [].forEach.call(document.querySelectorAll('.rv'), function(el){ el.classList.add('in'); });
+  }
+})();
+</script>
+</body>
+</html>
