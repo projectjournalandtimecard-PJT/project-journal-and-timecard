@@ -77,6 +77,11 @@ img{display:block;max-width:100%;}
   background:var(--void-2);box-shadow:0 50px 120px -40px rgba(0,0,0,.9),0 0 90px -50px var(--blue);
   will-change:transform;}
 .device img{width:100%;height:auto;}
+/* a quiet line under a screenshot, for the features whose point isn't
+   obvious from a picture alone */
+.cap{font-family:var(--mono);font-size:clamp(12px,1.35vw,14px);line-height:1.75;color:var(--dim);
+  max-width:52ch;margin:26px auto 0;}
+@media(max-width:760px){ .cap{margin-top:20px;max-width:34ch;font-size:12px;} }
 
 /* ── scene: the day, built live ───────────────────────────────────── */
 .chain{display:flex;gap:5px;width:min(920px,86vw);height:74px;margin-top:44px;}
@@ -260,6 +265,9 @@ a:focus-visible{outline:2px solid var(--blue);outline-offset:4px;}
       <div class="device" id="devTimer" style="width:min(980px,88vw);margin:0 auto">
         <img src="screenshots/timer.png" alt="The focus timer popped out into its own window above the app." loading="lazy">
       </div>
+      <p class="cap">Pop the timer out and it becomes its own small window that stays on top of
+        everything else &mdash; so you keep an eye on the clock while you work in Excel, or a PDF,
+        or anywhere else.</p>
     </div>
   </div>
 </section>
@@ -272,6 +280,9 @@ a:focus-visible{outline:2px solid var(--blue);outline-offset:4px;}
       <div class="device" id="devGuide" style="width:min(1020px,88vw);margin:0 auto">
         <img src="screenshots/guide.png" alt="The built-in user guide, with search and a sidebar of sections." loading="lazy">
       </div>
+      <p class="cap">A full searchable guide lives inside the app &mdash; no website to find, and it
+        works offline. It pops out into its own window too, so you can read a step and do it at the
+        same time.</p>
     </div>
   </div>
 </section>
