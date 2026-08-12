@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#070A10">
 <title>Project Journal &amp; Timecard</title>
 <meta name="description" content="Workpaper tracking and daily time logging in one self-contained app. One file. No server. No account.">
 <meta property="og:title" content="Project Journal &amp; Timecard">
@@ -37,8 +38,9 @@ img{display:block;max-width:100%;}
 .glow::after{width:46vw;height:46vw;right:-14vw;bottom:-12vw;background:var(--green);opacity:.13;}
 
 .scene{position:relative;z-index:1;}
-.pin{position:sticky;top:0;height:100vh;display:flex;align-items:center;justify-content:center;
-  overflow:hidden;}
+.pin{position:sticky;top:0;height:100vh;height:100svh;display:flex;align-items:center;
+  justify-content:center;overflow:hidden;
+  padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);}
 .mid{width:min(1180px,90vw);margin:0 auto;}
 
 .kicker{font-family:var(--mono);font-size:11px;letter-spacing:.28em;text-transform:uppercase;
@@ -89,7 +91,7 @@ img{display:block;max-width:100%;}
 .gridwrap{display:flex;align-items:center;gap:clamp(28px,6vw,90px);flex-wrap:wrap;justify-content:center;}
 .tgrid{display:grid;grid-template-columns:repeat(10,1fr);gap:6px;
   width:min(400px,64vw);}
-.tgrid i{aspect-ratio:1;border-radius:3px;background:var(--blue);will-change:opacity,transform;}
+.tgrid i{aspect-ratio:1;border-radius:3px;background:var(--blue);}
 .clock{font-variation-settings:'wdth' 100,'wght' 700;font-size:clamp(56px,11vw,140px);
   letter-spacing:-.05em;font-variant-numeric:tabular-nums;}
 
@@ -125,6 +127,49 @@ img{display:block;max-width:100%;}
 .rv.in{opacity:1;transform:none;}
 a:focus-visible{outline:2px solid var(--blue);outline-offset:4px;}
 
+/* ── phones ──────────────────────────────────────────────────────────
+   Three cards side by side cannot work at 390px, so on small screens the
+   choreography runs VERTICALLY — same four acts, same cyclone, stacked
+   instead of spread. Heights come down too: the same number of screens of
+   scrolling feels much longer on a phone. Blur effects are dropped; they
+   are the most expensive thing on the page and mobile GPUs show it. */
+@media(max-width:760px){
+  #hero{height:150vh !important;}
+  #s-journal{height:300vh !important;}
+  #s-day{height:320vh !important;}
+  #s-timer{height:320vh !important;}
+  #s-float{height:280vh !important;}
+  #s-guide{height:280vh !important;}
+  #s-priv{height:220vh !important;}
+  #s-count{height:620vh !important;}
+  #get{height:190vh !important;}
+
+  .glow::before{width:100vw;height:100vw;left:-25vw;filter:blur(70px);opacity:.24;}
+  .glow::after{width:80vw;height:80vw;right:-24vw;filter:blur(70px);}
+
+  .mid{width:92vw;}
+  .mark{width:88px;height:88px;margin-bottom:26px;}
+  .sub{max-width:32ch;}
+
+  /* screenshots are desktop UI — on a phone they read as texture, so give
+     them the full width rather than pretending they are legible */
+  .device{width:94vw !important;border-radius:9px;}
+
+  .card{width:min(268px,82vw);padding:22px 18px 20px;border-radius:16px;
+    backdrop-filter:none;background:rgba(13,19,28,.92);}
+  .card b{font-size:clamp(40px,13vw,62px);}
+  .card span{margin-top:8px;font-size:10px;letter-spacing:.2em;}
+  .card em{margin-top:10px;font-size:11px;}
+
+  .tgrid{width:min(300px,72vw);gap:4px;}
+  .gridwrap{gap:26px;}
+  .clock{font-size:clamp(52px,15vw,90px);}
+  .chain{height:56px;}
+
+  .btn{padding:15px 26px;}
+  .btns{flex-direction:column;align-items:stretch;padding:0 8vw;}
+}
+
 @media(prefers-reduced-motion:reduce){
   .rv{opacity:1;transform:none;transition:none;}
   .mark .ring{animation:none;stroke-dashoffset:0;}
@@ -154,7 +199,9 @@ a:focus-visible{outline:2px solid var(--blue);outline-offset:4px;}
       </g>
     </svg>
     <h1 class="big hero-title">Project&nbsp;Journal<br>&amp; Timecard</h1>
-    <p class="sub hero-sub" style="margin-left:auto;margin-right:auto">Workpapers and hours,<br>in one app.</p>
+    <p class="sub hero-sub" style="margin-left:auto;margin-right:auto;max-width:44ch">A project notes and
+      time-tracking app for multi-step projects &mdash; budgets, notes and hours in one place.
+      <br><br>Comes with a ready-made template for audit engagements.<br>Windows &amp; Mac. Free.</p>
    </div>
     <div id="hintWrap" style="position:absolute;bottom:34px;left:0;right:0;will-change:opacity">
       <div class="scroll-hint">SCROLL<span></span></div>
@@ -195,9 +242,10 @@ a:focus-visible{outline:2px solid var(--blue);outline-offset:4px;}
       <div class="gridwrap">
         <div class="tgrid" id="tgrid" aria-hidden="true"></div>
         <div>
-          <div class="kicker">Focus timer</div>
+          <div class="kicker">Built-in focus timer</div>
           <div class="clock" id="clock">25:00</div>
-          <p class="sub">A hundred squares. They go as the time goes.</p>
+          <p class="sub">Time-block your work, right inside the app.<br><br>
+            A hundred squares &mdash; they go as the time goes.</p>
         </div>
       </div>
     </div>
@@ -238,7 +286,7 @@ a:focus-visible{outline:2px solid var(--blue);outline-offset:4px;}
 </section>
 
 <!-- ── 8. three cards, then the cyclone ──────────────────────────── -->
-<section class="scene" id="s-count" style="height:560vh">
+<section class="scene" id="s-count" style="height:820vh">
   <div class="pin">
     <div class="cyclone" id="cyclone">
       <article class="card" data-i="0"><b>0</b><span>Servers</span><em>Nothing to go down</em></article>
@@ -305,12 +353,26 @@ a:focus-visible{outline:2px solid var(--blue);outline-offset:4px;}
   var cards  = [].slice.call(document.querySelectorAll('.card'));
   var arrive = document.getElementById('arrive');
 
-  /* ---- scene progress: 0 at the moment it pins, 1 when it unpins ---- */
+  /* ---- scene progress: 0 at the moment it pins, 1 when it unpins ------
+     Measured against the .pin element's own height rather than
+     window.innerHeight. On phones the URL bar collapses as you scroll,
+     window.innerHeight changes mid-gesture, and progress computed from it
+     jumps. The pin is 100svh and never moves, so it is the honest ruler. */
   function prog(scene){
     var r = scene.getBoundingClientRect();
-    var span = scene.offsetHeight - window.innerHeight;
+    var pin = scene.firstElementChild;
+    var vh = (pin && pin.offsetHeight) || window.innerHeight;
+    var span = scene.offsetHeight - vh;
     if(span <= 0) return r.top <= 0 ? 1 : 0;
     return clamp(-r.top / span, 0, 1);
+  }
+  /* Cached so we don't read layout on every frame; refreshed only on a real
+     resize, not on the small changes a collapsing URL bar produces. */
+  var VW = window.innerWidth, VH = window.innerHeight;
+  var vertical = VW < 760;
+  function remeasure(){
+    if(Math.abs(window.innerWidth - VW) < 2 && Math.abs(window.innerHeight - VH) < 140) return;
+    VW = window.innerWidth; VH = window.innerHeight; vertical = VW < 760;
   }
 
   var scenes = {
@@ -416,47 +478,55 @@ a:focus-visible{outline:2px solid var(--blue);outline-offset:4px;}
        jumps — it is always travelling from where it actually was.      */
     if(scenes.count && cards.length){
       var p  = prog(scenes.count);
-      var u  = Math.min(340, innerWidth * 0.30);   // horizontal spacing unit
-      var aIn = [ease(clamp(p/0.16,0,1)),
-                 ease(clamp((p-0.18)/0.16,0,1)),
-                 ease(clamp((p-0.36)/0.16,0,1))];
-      var two   = ease(clamp((p-0.18)/0.16,0,1));  // 1 card  → 2 cards
-      var three = ease(clamp((p-0.36)/0.16,0,1));  // 2 cards → 3 cards
-      var cyc   = clamp((p-0.66)/0.34, 0, 1);      // the drain
+      /* On a phone three cards cannot sit side by side, so the same
+         choreography runs down the screen instead of across it. */
+      var u  = vertical ? Math.min(148, VH * 0.20) : Math.min(340, VW * 0.30);
+      var aIn = [ease(clamp(p/0.11,0,1)),
+                 ease(clamp((p-0.125)/0.11,0,1)),
+                 ease(clamp((p-0.25)/0.11,0,1))];
+      var two   = ease(clamp((p-0.125)/0.11,0,1)); // 1 card  → 2 cards
+      var three = ease(clamp((p-0.25)/0.11,0,1));  // 2 cards → 3 cards
+      var cyc   = clamp((p-0.45)/0.55, 0, 1);      // the drain — 55% of the scene
 
-      /* resting x for each card at the current act */
-      var restX = [
+      /* resting offset for each card at the current act — the axis is the
+         only thing that changes between phone and desktop */
+      var rest = [
         (0)*(1-two) + (-0.5*u)*two*(1-three) + (-u)*three,
         (0.5*u)*two*(1-three) + (0)*three,
         (u)*three
       ];
-      /* card 2 and 3 slide in from off-screen right before they settle */
-      var enterX = [0, (1-aIn[1])*innerWidth*0.55, (1-aIn[2])*innerWidth*0.6];
+      /* cards 2 and 3 slide in from off-screen before they settle —
+         from the right on desktop, from below on a phone */
+      var travel = vertical ? VH*0.55 : VW*0.55;
+      var enter = [0, (1-aIn[1])*travel, (1-aIn[2])*travel*1.1];
 
       cards.forEach(function(card,i){
         var appear = aIn[i];
-        var x = restX[i] + enterX[i];
-        var y = 0, rot = 0;
+        var off = rest[i] + enter[i];
+        var x = vertical ? 0   : off;
+        var y = vertical ? off : 0;
+        var rot = 0;
         /* card 1 arrives from the back rather than the side */
         var sc = (i===0 ? 0.55 + 0.45*appear : 0.82 + 0.18*appear);
         var op = appear;
 
         if(cyc > 0){
           var dir   = (i===1 ? -1 : 1);
-          var form  = ease(clamp(cyc/0.34, 0, 1));      // line → ring
-          var spin  = cyc*cyc*860;                       // accelerating
-          var pull  = ease(clamp((cyc-0.22)/0.78, 0, 1));// inward spiral
-          var R     = u*0.92;
+          var form  = ease(clamp(cyc/0.26, 0, 1));      // line → ring
+          var spin  = cyc*cyc*1180;                      // accelerating
+          var pull  = ease(clamp((cyc-0.34)/0.66, 0, 1));// inward spiral, held off
+          var R     = vertical ? Math.min(u*0.85, VW*0.26) : u*0.92;
           var ang   = ((i*120 - 90) + spin) * Math.PI/180;
           var ringX = Math.cos(ang)*R, ringY = Math.sin(ang)*R;
+          var bob   = Math.sin(cyc*Math.PI*6)*(vertical?26:40)*dir*(1-form);
 
-          x  = x*(1-form) + ringX*form;
-          y  = ringY*form + Math.sin(cyc*Math.PI*4)*38*dir*(1-form);
-          rot = Math.sin(cyc*Math.PI*3)*11*dir*(1-form) + spin*0.22;
+          x  = x*(1-form) + ringX*form + (vertical ? 0 : 0);
+          y  = y*(1-form) + ringY*form + bob;
+          rot = Math.sin(cyc*Math.PI*5)*12*dir*(1-form) + spin*0.22;
 
           x *= (1-pull); y *= (1-pull);
           sc = sc*(1 - pull*0.94);
-          op = appear * (1 - ease(clamp((cyc-0.5)/0.5, 0, 1)));
+          op = appear * (1 - ease(clamp((cyc-0.62)/0.38, 0, 1)));
         }
         card.style.opacity = op;
         card.style.transform =
@@ -480,7 +550,8 @@ a:focus-visible{outline:2px solid var(--blue);outline-offset:4px;}
 
   if(!reduce){
     window.addEventListener('scroll', onScroll, {passive:true});
-    window.addEventListener('resize', onScroll);
+    window.addEventListener('resize', function(){ remeasure(); onScroll(); });
+    if(window.visualViewport) window.visualViewport.addEventListener('resize', onScroll);
     frame();
   } else {
     /* static, legible fallback */
