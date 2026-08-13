@@ -79,13 +79,30 @@ img{display:block;max-width:100%;}
 .device img{width:100%;height:auto;}
 /* a quiet line under a screenshot, for the features whose point isn't
    obvious from a picture alone */
-.slide-stage{position:relative;width:min(1000px,88vw);margin:0 auto;}
-.slide-stage .device{position:absolute;left:0;top:0;width:100%;will-change:transform,opacity;}
-.slide-stage .device:first-child{position:relative;}
-.slide-text{position:relative;min-height:190px;margin-bottom:4vh;}
+.slide-stage{position:relative;margin:0 auto;width:100%;height:min(52vh,560px);}
+/* the device div is only a positioning shell here — the frame styling moves
+   onto the img so the box always hugs the picture at whatever size it lands */
+.slide-stage .device{position:absolute;left:0;right:0;top:0;height:100%;
+  display:flex;align-items:flex-start;justify-content:center;
+  background:transparent;border:0;border-radius:0;box-shadow:none;overflow:visible;
+  will-change:transform,opacity;}
+.slide-stage .device img{height:100%;width:auto;max-width:100%;object-fit:contain;
+  border-radius:12px;border:1px solid rgba(238,243,250,.13);
+  box-shadow:0 50px 120px -40px rgba(0,0,0,.9),0 0 90px -50px var(--blue);}
+.slide-text{position:relative;min-height:20vh;margin-bottom:3vh;}
 .slide-text .st{position:absolute;left:0;right:0;top:0;will-change:opacity;}
-.slide-text .st .cap{margin-top:16px;}
-@media(max-width:760px){ .slide-stage{width:94vw;} .slide-text{min-height:230px;} }
+.slide-text .st .cap{margin-top:14px;}
+@media(max-width:760px){
+  .slide-stage{height:min(46vh,420px);}
+  .slide-text{min-height:27vh;margin-bottom:2vh;}
+}
+/* Same guard for every other pinned screenshot: a short laptop window must
+   never clip the heading off the top of a scene. */
+.pin .device:not(.slide-stage .device){display:flex;justify-content:center;background:transparent;
+  border:0;box-shadow:none;overflow:visible;}
+.pin .device:not(.slide-stage .device) img{width:auto;max-width:100%;max-height:56vh;
+  border-radius:12px;border:1px solid rgba(238,243,250,.13);
+  box-shadow:0 50px 120px -40px rgba(0,0,0,.9),0 0 90px -50px var(--blue);}
 .cap{font-family:var(--mono);font-size:clamp(12px,1.35vw,14px);line-height:1.75;color:var(--dim);
   max-width:52ch;margin:26px auto 0;}
 @media(max-width:760px){ .cap{margin-top:20px;max-width:34ch;font-size:12px;} }
@@ -272,7 +289,7 @@ a:focus-visible{outline:2px solid var(--blue);outline-offset:4px;}
 
       <div class="slide-text">
         <div class="st" id="st1">
-          <div class="mid-t">A napkin, built in.</div>
+          <div class="mid-t">A scratch pad, built in.</div>
           <p class="cap">For quick back-of-the-envelope maths and footing a column of totals &mdash;
             one keystroke away, without leaving the app or opening a spreadsheet.</p>
         </div>
