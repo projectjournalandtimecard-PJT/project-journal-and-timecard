@@ -79,6 +79,13 @@ img{display:block;max-width:100%;}
 .device img{width:100%;height:auto;}
 /* a quiet line under a screenshot, for the features whose point isn't
    obvious from a picture alone */
+.slide-stage{position:relative;width:min(1000px,88vw);margin:0 auto;}
+.slide-stage .device{position:absolute;left:0;top:0;width:100%;will-change:transform,opacity;}
+.slide-stage .device:first-child{position:relative;}
+.slide-text{position:relative;min-height:190px;margin-bottom:4vh;}
+.slide-text .st{position:absolute;left:0;right:0;top:0;will-change:opacity;}
+.slide-text .st .cap{margin-top:16px;}
+@media(max-width:760px){ .slide-stage{width:94vw;} .slide-text{min-height:230px;} }
 .cap{font-family:var(--mono);font-size:clamp(12px,1.35vw,14px);line-height:1.75;color:var(--dim);
   max-width:52ch;margin:26px auto 0;}
 @media(max-width:760px){ .cap{margin-top:20px;max-width:34ch;font-size:12px;} }
@@ -143,7 +150,7 @@ a:focus-visible{outline:2px solid var(--blue);outline-offset:4px;}
   #s-journal{height:300vh !important;}
   #s-day{height:320vh !important;}
   #s-timer{height:320vh !important;}
-  #s-float{height:280vh !important;}
+  #s-float{height:420vh !important;}
   #s-guide{height:280vh !important;}
   #s-priv{height:220vh !important;}
   #s-count{height:620vh !important;}
@@ -250,24 +257,42 @@ a:focus-visible{outline:2px solid var(--blue);outline-offset:4px;}
           <div class="kicker">Built-in focus timer</div>
           <div class="clock" id="clock">25:00</div>
           <p class="sub">Time-block your work, right inside the app.<br><br>
-            A hundred squares &mdash; they go as the time goes.</p>
+            A hundred squares &mdash; they go as the time goes. Pop it out and it floats
+            over everything else, so the clock stays visible while you work elsewhere.</p>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ── 5. it floats ───────────────────────────────────────────────── -->
-<section class="scene" id="s-float" style="height:400vh">
+<!-- ── 5. the scratch sheet — two panels, sliding ───────────────── -->
+<section class="scene" id="s-float" style="height:560vh">
   <div class="pin">
     <div class="mid" style="text-align:center">
-      <div class="mid-t" data-words style="margin-bottom:5vh">And it floats.</div>
-      <div class="device" id="devTimer" style="width:min(980px,88vw);margin:0 auto">
-        <img src="screenshots/timer.png" alt="The focus timer popped out into its own window above the app." loading="lazy">
+
+      <div class="slide-text">
+        <div class="st" id="st1">
+          <div class="mid-t">A napkin, built in.</div>
+          <p class="cap">For quick back-of-the-envelope maths and footing a column of totals &mdash;
+            one keystroke away, without leaving the app or opening a spreadsheet.</p>
+        </div>
+        <div class="st" id="st2">
+          <div class="mid-t">With real formulas.</div>
+          <p class="cap">SUM, AVG, MIN and MAX over any range, plus the usual arithmetic and
+            parentheses. Point at cells to build a formula. Select a block and it pastes into Excel
+            as cells, not as text.</p>
+        </div>
       </div>
-      <p class="cap">Pop the timer out and it becomes its own small window that stays on top of
-        everything else &mdash; so you keep an eye on the clock while you work in Excel, or a PDF,
-        or anywhere else.</p>
+
+      <div class="slide-stage">
+        <div class="device" id="sl1">
+          <img src="screenshots/scratch.png" alt="The scratch sheet with a short column of figures and their total." loading="lazy">
+        </div>
+        <div class="device" id="sl2">
+          <img src="screenshots/scratch-formula.png" alt="A formula being built in the scratch sheet, with the referenced cells highlighted." loading="lazy">
+        </div>
+      </div>
+
     </div>
   </div>
 </section>
@@ -400,7 +425,8 @@ a:focus-visible{outline:2px solid var(--blue);outline-offset:4px;}
   var heroInner = document.getElementById('heroInner');
   var hintWrap  = document.getElementById('hintWrap');
   var devJournal = document.getElementById('devJournal');
-  var devTimer   = document.getElementById('devTimer');
+  var sl1 = document.getElementById('sl1'), sl2 = document.getElementById('sl2');
+  var st1 = document.getElementById('st1'), st2 = document.getElementById('st2');
   var devGuide   = document.getElementById('devGuide');
 
   /* a screenshot that rises, straightens and grows into the frame */
@@ -443,7 +469,24 @@ a:focus-visible{outline:2px solid var(--blue);outline-offset:4px;}
     wordSets.forEach(function(set){ if(set.scene) words(set, prog(set.scene)); });
 
     if(scenes.journal) riseIn(devJournal, prog(scenes.journal), 0.62, 12);
-    if(scenes.flt)     riseIn(devTimer,   prog(scenes.flt),     0.70, -9);
+    /* ── two scratch panels, sliding sideways ───────────────────────
+       Panel one enters from the right and holds; then it leaves to the
+       left as panel two enters from the right, with the text crossfading
+       on the same beats so the words always match the picture. */
+    if(scenes.flt && sl1 && sl2){
+      var fp = prog(scenes.flt);
+      var aIn2 = ease(clamp(fp/0.16, 0, 1));            // panel 1 arrives
+      var swap = ease(clamp((fp-0.46)/0.18, 0, 1));     // 1 leaves, 2 arrives
+      var ax = (1-aIn2)*VW*0.8 - swap*VW*0.95;
+      var bx = (1-swap)*VW*0.95;
+      var aop = aIn2 * (1-swap), bop = swap;
+      sl1.style.transform = 'translateX('+ax.toFixed(1)+'px) scale('+(0.93+0.07*aIn2).toFixed(3)+')';
+      sl1.style.opacity = aop;
+      sl2.style.transform = 'translateX('+bx.toFixed(1)+'px) scale('+(0.93+0.07*swap).toFixed(3)+')';
+      sl2.style.opacity = bop;
+      if(st1) st1.style.opacity = aop;
+      if(st2) st2.style.opacity = bop;
+    }
     if(scenes.guide)   riseIn(devGuide,   prog(scenes.guide),   0.70, 8);
 
     /* the day builds block by block, then the whole chain settles */
@@ -566,7 +609,9 @@ a:focus-visible{outline:2px solid var(--blue);outline-offset:4px;}
     frame();
   } else {
     /* static, legible fallback */
-    [devJournal,devTimer,devGuide].forEach(function(d){ if(d){ d.style.transform='none'; d.style.opacity=1; } });
+    [devJournal,devGuide,sl1,sl2].forEach(function(d){ if(d){ d.style.transform='none'; d.style.opacity=1; } });
+    if(sl2){ sl2.style.position='relative'; sl2.style.marginTop='22px'; }
+    [st1,st2].forEach(function(e){ if(e){ e.style.opacity=1; e.style.position='relative'; } });
     wordSets.forEach(function(s){ s.words.forEach(function(w){ w.style.opacity=1; w.style.transform='none'; }); });
     blocks.forEach(function(b){ b.style.transform='scaleY(1)'; b.firstChild.style.opacity=1; });
     if(dotWrap) dotWrap.style.transform='none';
